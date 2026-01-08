@@ -1,0 +1,274 @@
+.dashboard {
+  width: 100%;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.dashboard-header h2 {
+  color: #4a9eff;
+  font-size: 2rem;
+}
+
+.dashboard-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.filter-select {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: 1px solid #404040;
+  background-color: #2d2d2d;
+  color: #e0e0e0;
+  font-size: 1rem;
+}
+
+.refresh-btn {
+  padding: 0.5rem 1.5rem;
+  border-radius: 4px;
+  border: none;
+  background-color: #4a9eff;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.refresh-btn:hover {
+  background-color: #3a8eef;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: #888;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.content-card-wrapper {
+  position: relative;
+}
+
+.content-card {
+  background-color: #2d2d2d;
+  border: 1px solid #404040;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: block;
+}
+
+.content-card-wrapper:hover .content-card {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border-color: #4a9eff;
+}
+
+.delete-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background-color: #f44336;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem;
+  cursor: pointer;
+  font-size: 1.2rem;
+  opacity: 0;
+  transition: opacity 0.2s, background-color 0.2s;
+  z-index: 10;
+}
+
+.content-card-wrapper:hover .delete-btn {
+  opacity: 1;
+}
+
+.delete-btn:hover {
+  background-color: #d32f2f;
+}
+
+.content-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border-color: #4a9eff;
+}
+
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-queued {
+  background-color: #666;
+  color: white;
+}
+
+.status-processing {
+  background-color: #ffa500;
+  color: white;
+}
+
+.status-approved {
+  background-color: #4caf50;
+  color: white;
+}
+
+.status-pending {
+  background-color: #ff9800;
+  color: white;
+}
+
+.status-blocked {
+  background-color: #f44336;
+  color: white;
+}
+
+.content-type {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.content-text {
+  margin-bottom: 1rem;
+  line-height: 1.6;
+  color: #e0e0e0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.content-meta {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+.author {
+  font-weight: 600;
+  color: #4a9eff;
+}
+
+.content-prediction {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #404040;
+}
+
+.prediction-decision {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.prediction-score {
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.prediction-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.label-badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.label-spam {
+  background-color: #ff9800;
+  color: white;
+}
+
+.label-toxic {
+  background-color: #f44336;
+  color: white;
+}
+
+.label-hate {
+  background-color: #9c27b0;
+  color: white;
+}
+
+.label-offensive {
+  background-color: #ff5722;
+  color: white;
+}
+
+.no-prediction {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #404040;
+  color: #888;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #888;
+  font-size: 1.2rem;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.page-btn {
+  padding: 0.5rem 1.5rem;
+  border-radius: 4px;
+  border: 1px solid #404040;
+  background-color: #2d2d2d;
+  color: #e0e0e0;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.page-btn:hover:not(:disabled) {
+  background-color: #404040;
+}
+
+.page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-info {
+  color: #aaa;
+}

@@ -1,0 +1,213 @@
+.review-queue {
+  width: 100%;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.review-header h2 {
+  color: #4a9eff;
+  font-size: 2rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.queue-count {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: #888;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #888;
+  font-size: 1.2rem;
+}
+
+.review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.review-card {
+  background-color: #2d2d2d;
+  border: 1px solid #404040;
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  transition: opacity 0.3s;
+}
+
+.review-card.processing {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.review-content {
+  flex: 1;
+}
+
+.review-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.review-link {
+  text-decoration: none;
+  color: #4a9eff;
+}
+
+.review-link h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.agent-decision-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background-color: #404040;
+  color: #e0e0e0;
+}
+
+.review-text {
+  margin: 1rem 0;
+  line-height: 1.6;
+  color: #e0e0e0;
+  padding: 1rem;
+  background-color: #1a1a1a;
+  border-radius: 4px;
+  border-left: 3px solid #4a9eff;
+}
+
+.review-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #aaa;
+  margin-top: 1rem;
+}
+
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.meta-label {
+  color: #888;
+}
+
+.author-name {
+  color: #4a9eff;
+  font-weight: 600;
+}
+
+.reputation {
+  color: #aaa;
+}
+
+.meta-separator {
+  color: #666;
+}
+
+.score-value {
+  color: #4a9eff;
+  font-weight: 600;
+}
+
+.confidence {
+  color: #ff9800;
+  font-weight: 600;
+}
+
+.prediction-scores-mini {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #404040;
+}
+
+.prediction-scores-mini span {
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.score-high {
+  background-color: #f44336;
+  color: white;
+}
+
+.score-low {
+  background-color: #404040;
+  color: #aaa;
+}
+
+.review-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 120px;
+}
+
+.action-btn {
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.action-btn:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: scale(1.05);
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-allow {
+  background-color: #4caf50;
+  color: white;
+}
+
+.action-review {
+  background-color: #ff9800;
+  color: white;
+}
+
+.action-block {
+  background-color: #f44336;
+  color: white;
+}

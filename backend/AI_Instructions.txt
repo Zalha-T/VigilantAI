@@ -1,0 +1,908 @@
+Upute za korištenje LLM-a za izradu agenta
+Upute studentima: diskusija ideje i dizajn AI agenta
+ 
+Na ovom predmetu nije cilj samo implementirati ML model ili web aplikaciju, već razviti inteligentnog softverskog agenta.
+
+Zato se značajan dio bodova odnosi na razmišljanje, diskusiju i dizajn agenta, a ne samo na kod.
+ 
+1) Diskusija ideje
+Prije pisanja koda, student treba provesti ozbiljnu diskusiju oko same ideje.
+U ovoj fazi preporučeno je koristiti LLM (GPT, Copilot Chat) kao partner za razmišljanje.
+Student treba kroz diskusiju razjasniti:
+Šta je problem koji agent rješava?
+Da li je sistem agent, ili samo analitička aplikacija?
+Šta se dešava kroz vrijeme (iterativno), a ne samo jednom?
+ Ako se ideja može svesti na:
+“Korisnik unese podatke → dobije rezultat”
+
+onda nije postignut cilj.
+2) Vrste agenata (student mora izabrati šta gradi)
+Tokom diskusije, student treba navesti koju vrstu agenta implementira (jednu ili više):
+Primjeri (nije ograničeno):
+Ciljno-orijentisani agent
+→ ima jasan cilj koji optimizira (min/max)
+Klasifikacioni agent
+→ donosi odluke u zonama / pragovima (npr. Allow / Review / Block)
+Savjetodavni agent
+→ predlaže, ali ne odlučuje
+Context-aware agent
+→ ista situacija → različita akcija u zavisnosti od konteksta
+Learning agent
+→ mijenja ponašanje nakon novih iskustava
+Multi-agent sistem
+→ više agenata sa različitim ulogama (npr. DecisionAgent + LearningAgent)
+Student treba objasniti zašto je zašto je izabrao baš tu vrstu agenta.
+3) Sense → Think → Act → Learn (bez ovoga nema punih bodova)
+Svaka ideja mora biti razložena na agent ciklus.
+Primjer pitanja koja student mora znati odgovoriti:
+Sense:
+Šta agent opaža iz okoline? (podaci, stanje sistema, kontekst)
+Think:
+Kako agent zaključuje? (pravila, ML model, pragovi, heuristike)
+Act:
+Šta agent konkretno radi u sistemu? (status, preporuka, akcija)
+Learn :
+Šta agent pamti i kako se mijenja kroz vrijeme?
+4) Ideje za proširenje
+Nakon osnovne ideje, student treba razmotriti barem jedno proširenje.
+Primjeri proširenja:
+nesigurni slučajevi (agent prepoznaje kada “nije siguran”)
+adaptivni pragovi (mijenjaju se kroz vrijeme)
+aktivno učenje (agent traži dodatne informacije)
+objašnjenje odluka (zašto je agent nešto preporučio)
+više agenata sa podjelom odgovornosti
+simulacija okoline (agent testira ponašanje)
+Nije obavezno sve implementirati, ali diskusija mora postojati.
+5) Uloga LLM-a u ovoj fazi 
+Korištenje LLM-a je dozvoljeno i poželjno, ali se boduje kako se koristi.
+Preporučeni način:
+koristiti LLM-a za:
+generisanje više varijanti ideje
+poređenje različitih tipova agenata
+kritiku vlastite ideje (“zašto ovo nije agent?”)
+tražiti od LLM-a:
+da predloži 3 alternative
+da navede slabosti ideje
+da predloži proširenja
+Student treba pokazati da nije prihvatio prvi odgovor, nego da je razmišljao i birao.
+6) Tek nakon ovoga dolazi kod
+Tek kada su:
+ideja jasna,
+agent ciklus definisan,
+vrsta agenta izabrana,
+proširenja razmotrena,
+onda se prelazi na specifikaciju agenta koja definiše:
+implementaciju
+web / UI
+ML biblioteke
+Dio specifikacije može biti izvučen iz obavijesti "Upute za softversku arhitekturu agenta"
+Kad je specifikacija gotova, tada je smisleno koristiti LLM koji je jači u pisanju koda (npr. Claude AI, Cursor ili Copilot u IDE-u):
+pošaljete mu specifikaciju + strukturu projekta
+tražite da generiše kod po modulima (Domain/Application/Infrastructure/Web)
+tražite “copy-paste spremne fajlove”, ali po koracima (ne sve odjednom)
+Šta se boduje:
+da kod prati specifikaciju
+da su slojevi čisti (Web sloj tanak, logika u shared)
+da agent ima Tick/Step logiku, a host samo loop/scope/delay
+3) Faza code review (LLM kao “recenzent”)
+Nakon što drugi LLM napiše kod, šaljete ga nazad u prvi LLM (GPT ili drugi model) koji ima širu sliku i da radi review:
+“Da li Web sloj sadrži biznis logiku?”
+“Da li je Sense/Think/Act/Learn jasno razdvojeno?”
+“Koje su 3 najveće greške i kako ih popraviti?”
+“Gdje je coupling prejak, gdje treba refaktor?”
+Šta se boduje:
+da imate iteracije i popravke, ne samo prvi output
+da umijete objasniti zašto ste promijenili arhitekturu
+Optimalni scenario (najviše bodova)
+Ako hoćete maksimum bodova, idealan tok je:
+Diskusija sa GPT ili Copilot chat (šira slika):
+generišite više ideja, izaberite jednu, napravite agent specifikaciju i acceptance kriterije.
+Spec u “koder” LLM (Claude AI, Cursor, Copilot u IDE):
+implementacija po slojevima i modulima.
+Review u GPT ili Copilot chat (šira slika):
+refaktor, čišćenje Web sloja, provjera agent ciklusa, testovi.
+2–3 iteracije između modela:
+jedna iteracija skoro uvijek nije dovoljno dobra.
+To izgleda kao rad sa ekspertima u stvarnom životu:
+jedan ekspert pomaže oko koncepta (arhitektura/spec),
+drugi oko implementacije (kod),
+treći radi review (kritički pogled).
+Različiti LLM-ovi i “nivo diskusije”
+GPT / Copilot Chat: bolji za širi pogled, arhitekturu, plan, rizike, edge-caseove, “šta fali agentu”.
+Claude AI / Cursor: često odlični u generisanju većih dijelova koda sa vrlo malo grešaka i refaktoru, posebno jaki kad imaju cijeli kontekst projekta.
+Copilot u IDE-u: super za sitne stvari (metode, DTO, mapping), ali zna izgubiti “veliku sliku”.
+Kombinacija različitih LLM-ova je poželjna na predmetu.
+ 
+Godina 4 - Umjetna inteligencija 2025/2026
+---
+
+ Način formiranja konačne ocjene iz predmeta "Umjetna inteligencija"
+
+
+C. Agent - max 70b
+Unikatnost ideje - 15b
+Primjenjivost - 5b
+Tehnička implementacija - 30b
+
+Obavezno razdvajanje na logičke cjeline Sense→Think→Act→Learn + korištenje "Clean architecture", pogledati obavijest na Teams: "Upute za softversku arhitekturu agenta - v2"
+Način primjene LLM-a - 20b
+
+Obavezno: diskusija ideje, specifikacija agenta, ideje za proširenje, review implementacije. Pogledajte obavijest na Teams: "Upute za korištenje LLM-a"
+ 
+Primjenjivost rješenja, tehnička implementacija agenta i način korištenja LLM-a  boduju se na osnovu dokumentacije koja treba biti uploadovana sa source kodom.
+
+Godina 4 - Umjetna inteligencija 2025/2026
+ 
+----
+ 
+Upute za softversku arhitekturu agenta - v2
+Godina 4 - Umjetna inteligencija 2025/2026
+ 
+Slojevi i odgovornosti
+Obavezna podjela odgovornosti, prema logičkim komponentama agenta (Sense→Think→Act→Learn) te programerski cijelinama "Clean architecture". Sva logika agenta koja odlučuje šta se dešava sa porukom / modelom mora biti ushared modulu a ne u Webmodulu. Web je samo “transport + host”:
+više projekata unutar jednog Visual studio solutiona (ako je dotnet projekat) ili 
+posebni folderi (za druge frameworkove / programske jezike).
+ 
+Slijedi primjer Spam agent - detaljnije upute će biti date u sklopu nastave - vježbe 5, naredni petak.
+https://github.com/adil-fit-ba/AI-2025-26/tree/main/Vjezbe05
+ 
+ 
+Za pune bodove iz tehničke implementacije agenta potrebo je primijeniti sljedeće:
+1- AiAgents.Core (framework sloj)
+Samo generičke abstrakcije:
+SoftwareAgent<TPercept, TAction, TResult, TExperience>
+IPerceptionSource<T>
+IPolicy<TPercept, TAction>
+IActuator<TAction, TResult>
+ILearningComponent<TExperience>
+Nema EF, nema ML.NET, nema “Spam” znanja.
+
+2- AiAgents.SpamAgent (shared logika = “mozak” agenta)
+
+a. Domain
+Entiteti + enum-i: Message, Prediction, Review, ModelVersion, SystemSettings
+Pravila i invarijante koje su domenske (npr. legalni statusi, labeli, odluke)
+Domain ne zna za Web/SignalR.
+b. Application
+Ovdje živi agent logika kroz use-case servise + runnere.
+c. Use-case servisi (commands/use-cases):
+QueueService (enqueue/dequeue, update status)
+ScoringService (score + apply thresholds + persist prediction + update status)
+ReviewService (gold label + counter update)
+TrainingService (train/retrain + model versioning + activate)
+d. Runneri (agent ciklus):
+ScoringAgentRunner → Sense → Think → Act
+RetrainAgentRunner → Sense → Think → Act → Learn
+Runneri su mjesto gdje se vidi “agent arhitektura” i gdje se spaja više servisa u jedan tick.
+Runner ne smije biti “tanki wrapper”. Runner mora sadržati logiku “šta je percept”, “šta znači hasNext”, “kada se radi tick/step”, “kada se prekače”.
+e- Infrastructure
+SpamAgentDbContext
+DatabaseSeeder (import + deterministični split)
+File storage helper (model path, direktoriji)
+(Repo helper samo ako stvarno treba, ali bolje ne)
+f- ML
+ISpamClassifier
+MlNetSpamClassifier (load/predict/train)
+ML je crna kutija za predmet "Umjetna inteligencija". Detalji će biti obrađivani na predmetu "Mašinsko učenje".
+3- AiAgents.SpamAgent.Web (host/transport = “tanki sloj”)
+Web smije imati samo:
+Controllers (pozovu Application servise / query servise)
+DTO mapping
+SignalR emit
+Background scheduling (delay, scope-per-iteration, cancellation)
+DI wiring
+Web sloj ne smije sadržavati domenske odluke:
+thresholds pravila (Allow/Pending/Block)
+status rules (kada ide u PendingReview)
+retrain uslov (gold threshold)
+dataset split pravila
+Ako se to pojavi u Webu → smatra se lošom arhitekturom.
+
+
+
+“Agent logika”
+“jedan korak” sistema
+šta agent opaža (percept)
+uslov kada radi / kada preskače
+šta odluči i šta uradi u tom koraku
+koje promjene stanja nastaju u DB
+I to mora biti u Runneru.
+
+
+Minimalni standard za Runner (primjer na SPAM agentu)
+
+a- ScoringAgentRunner (shared)
+Sense: uzmi sljedeću poruku iz queue-a (Status=Queued)
+Think: izračunaj pSpam
+Act: apply thresholds + set status + upiši prediction
+Output: ScoringTickResult (ovakav dto rezultat se šalje u Web evente)
+Web ne smije ponovo računati poslovna pravila (decision niti status).
+Web samo emituje rezultat iz Runnera.
+b- RetrainAgentRunner (shared)
+Sense: očitaj SystemSettings (NewGoldSinceLastTrain, Threshold, Enabled)
+Think: da li treba retrain
+Act: pozovi TrainingService.TrainModelAsync(template, activate:true)
+Learn: reset counter / update settings (ili kroz TrainingService)
+
+
+
+Šta Web worker smije raditi 
+while (!token.IsCancellationRequested)
+CreateScope()
+runner.TickAsync(token)
+Delay(...)
+Emit SignalR
+Worker ne smije:
+“ako pSpam > … onda…”
+“ako gold >= … onda train…”
+“ako nema modela onda… učitaj model file…”
+To ide u shared (servis/runner).
+
+
+“Ovo je Clean Architecture u praksi: Domain + Application + Infrastructure + Host.
+Ne radimo puni CQRS (Commands/Handlers/MediatR) jer predmet nije enterprise backend,
+nego agentički tok Sense→Think→Act→Learn.”
+---
+
+ 
+ 
+Pravilo #1: Step/Tick = jedna iteracija agentičkog ciklusa
+Svaki Step() mora biti prepoznatljiv kao:
+Sense: pročitaj jedno “stanje svijeta” (DB/queue/model state)
+Think: donesi odluku (policy/pravila)
+Act: izvrši akciju (promijeni svijet)
+Learn (ako postoji): ažuriraj znanje / brojač / Q tabelu / metrikе
+Ako funkcionalnosti nisu jasno razdvojeni na Sense/Think/Act/Learn u tick-u → nije agent, nego helper metoda.
+Pravilo #2: Tick/step radi “malo”, ne “sve”
+Tick/step mora biti kratak i atomaran.
+Dobar primjer:
+scoring agent: obradi jednu poruku
+retrain agent: uradi jednu provjeru i eventualno pokrene retrain
+Loš primjer:
+u tick-u obradi 200 poruka + retrain + emit sve + cleanup
+To je monolit, teško testirati i lako se zaglavi.
+Pravilo #3: Tick/step mora imati “no-work” izlaz bez štete
+Kad nema posla, tick/step ne smije praviti štetu, ni trošiti resurse.
+Dobar primjer:
+ako nema queued poruke → vrati null / false / NoWork
+host onda radi delay/backoff
+Loš primjer:
+tick/step baca exception kad nema poruka
+tick/step radi “busy loop” bez pauze
+Pravilo #4: Tick/step ne smije sadržavati “host” stvari
+Tick/step je logika agenta (shared). Host (Web/Console) je samo orkestracija.
+Tick/step ne smije da implementira:
+Task.Delay(...)
+SignalR emit
+HTTP logiku
+CORS, routing, DTO mapping
+Tick može da implementira:
+DB upis/čitanje preko servisa
+odluku: status, thresholds, retrain rule
+kreiranje domain objekata (Prediction, Review…)
+Pravilo #5: Tick mora biti idempotentan koliko god može
+Ako se tick/step ponovi (zbog restarta, exception-a), ne smije urušiti sistem.
+Dovoljno je implementirati sljedeće dvije stavke:
+poruka se “dequeue-a” na siguran način (ne procesira se duplo)
+upis prediction-a/statusa je konzistentan
+Tipično rješenje: status Queued → Processing → Done ili transakcija + update status.
+Pravilo #6: Tick/step može imati jasno definisan “rezultat”
+Tick/step može vraćati DTO rezultat koji host može koristiti za UI/log/realtime. Ovo zahtjeva modifikaciju bazne klase SoftwareAgent!
+Preporuka:
+TickResult Step();
+null = nema posla
+TickResult = šta se desilo (MessageId, Decision, NewStatus, ModelVersion…)
+Host onda:
+logira
+emituje SignalR event
+odluči koliko da čeka
+Pravilo #7: Ako akcija traje dugo, tick mora biti state-machine
+Ako tick/step može trajati “dugo” (npr. trening modela), onda:
+tick/step radi kao mašina stanja:
+CheckThreshold
+StartTraining
+ActivateModel
+ResetCounter
+Ili: trening je servis koji vodi posao, tick samo prati status.
+Loš primjer:
+tick/step blokira 30–60 sekundi i drži worker “zaleđen”
+Pravilo #8: Granice odgovornosti
+Primjer razdvajanja na manje agente.
+ 
+Scoring tick
+Sense: uzmi 1 queued message
+Think: izračunaj pSpam
+Act: upiši prediction + postavi status (Inbox/Spam/PendingReview)
+Retrain tick (obavezno)
+Sense: pročitaj settings + gold counter
+Think: ShouldRetrain?
+Act: treniraj + kreiraj ModelVersion + activate
+Learn: reset counter, log
+Šablon - ako je async
+public async Task<ScoringTickResult?> StepAsync(CancellationToken ct)
+{
+    // SENSE
+    var msg = await _queue.DequeueNextAsync(ct);
+    if (msg == null) return null;
+    // THINK
+    var pSpam = await _classifier.PredictAsync(msg.Text, ct);
+    var decision = _rules.Decide(pSpam, _settings);
+    // ACT
+    await _writer.SavePredictionAndUpdateStatusAsync(msg, pSpam, decision, ct);
+    // (LEARN optional)
+    // e.g., metrics counter, audit, etc.
+    return new ScoringTickResult { ... };
+}
+Dvije “najčešće greške”
+Stavljanje thresholds i retrain pravila u Web layer
+→ minus jer Web mora biti tanak host.
+Tick/step koji u sebi radi delay i realtime emit
+→ minus jer tick/step mora biti dijeljiva “jezgra” (shared).
+
+Godina 4 - Umjetna inteligencija 2025/2026
+----- 
+1- source code
+2- dokumentacija
+3- pptx
+4- demo video (opcionalno)
+
+================================================================================
+BRAINSTORMING I PLAN PROJEKTA
+================================================================================
+
+IZABRANA IDEJA: Content Moderation Agent (Klasifikacioni + Context-aware + Learning)
+Status: U diskusiji / Razrada
+
+================================================================================
+DODATNE IDEJE SA JAKIM FEEDBACK LOOPOM ZA UČENJE
+================================================================================
+
+IDEJA 1: Fraud Detection Agent (Klasifikacioni + Learning + Context-aware)
+Problem: Detekcija fraudulentnih transakcija/aktivnosti sa kontinuiranim učenjem iz feedbacka.
+
+Agent ciklus:
+- Sense: Prati transakcije, korisničko ponašanje, patterns, historiju
+- Think: Klasificira (Allow/Review/Block) koristeći ML model + pravila + kontekst
+- Act: Blokira transakcije, traži dodatnu verifikaciju, alertira sigurnosni tim
+- Learn: JAK FEEDBACK LOOP - uči iz:
+  * False positives (korisnik se žalio, transakcija je bila legit)
+  * False negatives (naknadno otkrivena prevara)
+  * Feedback sigurnosnog tima (potvrda/odbijanje)
+  * Prilagođava pragove, mijenja feature importance, retrenira model
+
+Proširenja:
+- Multi-agent: FastAgent (brze odluke) + DeepAgent (kompleksne analize)
+- Aktivno učenje: Agent traži feedback za granične slučajeve
+- Adaptivni pragovi: Mijenjaju se po kontekstu (npr. noć vs dan, novi korisnik vs stari)
+- Objašnjenje odluka: Zašto je agent blokirao (transparentnost)
+
+Zašto je feedback važan: Svaki false positive/negative je direktan feedback koji poboljšava model.
+
+---
+
+IDEJA 2: Medical Diagnosis Support Agent (Savjetodavni + Learning + Context-aware)
+Problem: Preporuka dijagnoza na osnovu simptoma, sa učenjem iz doktorskog feedbacka.
+
+Agent ciklus:
+- Sense: Čita simptome, testove, historiju pacijenta, kontekst (dob, spol, lokacija)
+- Think: Predlaže moguće dijagnoze sa vjerovatnoćama, identifikuje nesigurne slučajeve
+- Act: Preporučuje dijagnoze, sugerira dodatne testove, upozorava na rizike
+- Learn: JAK FEEDBACK LOOP - uči iz:
+  * Doktorska potvrda/odbijanje dijagnoze (gold label)
+  * Stvarna dijagnoza nakon testova
+  * Feedback o korisnosti preporuka
+  * Prilagođava model, uči nove obrasce, mijenja pragove
+
+Proširenja:
+- Nesigurni slučajevi: Agent eksplicitno kaže "nisam siguran, potrebna dodatna analiza"
+- Multi-agent: SymptomAgent + TestAgent + RiskAgent
+- Aktivno učenje: Traži feedback za rijetke kombinacije simptoma
+- Objašnjenje: Zašto je agent predložio određenu dijagnozu
+
+Zašto je feedback važan: Svaki doktorski feedback direktno poboljšava preporuke.
+
+---
+
+IDEJA 3: Code Quality & Security Agent (Klasifikacioni + Learning)
+Problem: Automatska procjena kvalitete i sigurnosti koda sa učenjem iz code review feedbacka.
+
+Agent ciklus:
+- Sense: Analizira code changes, pull requestove, code review komentare, testove
+- Think: Procjenjuje kvalitet (Allow/Review/Block merge), identifikuje security issues, code smells
+- Act: Preporučuje blokiranje merge-a, traži dodatne reviewere, šalje feedback
+- Learn: JAK FEEDBACK LOOP - uči iz:
+  * Code review feedback (što je propušteno, što je bilo lažno upozorenje)
+  * Kasniji bugovi (koji reviewi su propustili probleme)
+  * Developer feedback (korisnost preporuka)
+  * Prilagođava kriterije, uči nove patterns, mijenja pragove
+
+Proširenja:
+- Multi-agent: QualityAgent + SecurityAgent + PerformanceAgent
+- Aktivno učenje: Traži feedback za granične slučajeve
+- Adaptivni pragovi: Različiti za različite tipove projekata
+- Objašnjenje: Zašto je agent blokirao merge
+
+Zašto je feedback važan: Svaki bug koji je propušten ili lažno upozorenje direktno poboljšava agenta.
+
+---
+
+IDEJA 4: Customer Support Triage Agent (Klasifikacioni + Learning + Context-aware)
+Problem: Automatska prioritizacija i rutiranje support ticketova sa učenjem iz rezultata.
+
+Agent ciklus:
+- Sense: Čita support ticketove, sentiment, historiju korisnika, kategoriju problema
+- Think: Klasificira prioritet (Low/Medium/High/Urgent), predlaže rutiranje (tim, ekspert)
+- Act: Dodjeljuje prioritet, rutira ticket, preporučuje akcije, eskalira kritične
+- Learn: JAK FEEDBACK LOOP - uči iz:
+  * Vrijeme rješavanja (je li prioritet bio točan?)
+  * Customer satisfaction (je li rješenje bilo dobro?)
+  * Agent feedback (je li rutiranje bilo točno?)
+  * Prilagođava prioritizaciju, uči nove obrasce, mijenja pravila
+
+Proširenja:
+- Multi-agent: TriageAgent + EscalationAgent + SatisfactionAgent
+- Aktivno učenje: Traži feedback za slične ticketove
+- Adaptivni pragovi: Mijenjaju se po sezoni/tipu problema
+- Objašnjenje: Zašto je agent dodijelio određeni prioritet
+
+Zašto je feedback važan: Svaki ticket sa feedbackom poboljšava buduće prioritizacije.
+
+---
+
+IDEJA 5: Investment Recommendation Agent (Savjetodavni + Learning + Context-aware)
+Problem: Preporuka investicija sa učenjem iz stvarnih rezultata i korisničkog feedbacka.
+
+Agent ciklus:
+- Sense: Prati tržište, portfolio korisnika, risk tolerance, ciljeve, historiju
+- Think: Predlaže investicije, procjenjuje rizik, optimizira portfolio
+- Act: Preporučuje akcije (buy/sell/hold), upozorava na rizike, sugerira diverzifikaciju
+- Learn: JAK FEEDBACK LOOP - uči iz:
+  * Stvarni ROI preporuka (kako su se preporuke pokazale?)
+  * Korisnički feedback (je li preporuka bila korisna?)
+  * Market outcomes (je li predviđanje bilo točno?)
+  * Prilagođava strategije, uči nove obrasce, mijenja risk assessment
+
+Proširenja:
+- Multi-agent: AnalysisAgent + RiskAgent + RecommendationAgent
+- Simulacija: Testira strategije prije preporuke
+- Nesigurni slučajevi: Agent kaže "nisam siguran" za volatilne tržišta
+- Objašnjenje: Zašto je agent preporučio određenu investiciju
+
+Zašto je feedback važan: Svaki stvarni rezultat direktno validira i poboljšava preporuke.
+
+================================================================================
+DETALJNA RAZRADA: CONTENT MODERATION AGENT
+================================================================================
+
+PROBLEM:
+Automatska moderacija sadržaja (komentari, postovi, poruke) sa kontekstualnom 
+inteligencijom i kontinuiranim učenjem iz feedbacka moderatora i korisnika.
+
+VRSTA AGENTA:
+- Klasifikacioni agent (Allow/Review/Block)
+- Context-aware agent (različite akcije u različitom kontekstu)
+- Learning agent (mijenja ponašanje nakon novih iskustava)
+
+ZAŠTO OVA VRSTA:
+- Klasifikacioni: Jasni pragovi i zone odluke (Allow/Review/Block)
+- Context-aware: Isti komentar može biti OK u jednom kontekstu, a problematičan u drugom
+- Learning: Feedback loop je kritičan - agent mora učiti iz grešaka
+
+SENSE → THINK → ACT → LEARN CIKLUS:
+
+SENSE (Šta agent opaža):
+- Novi komentari/postovi/poruke u queue-u (Status=Queued)
+- Kontekst: autor (historija, reputation, novi vs stari korisnik)
+- Kontekst: lokacija komentara (koja tema, diskusija, thread)
+- Kontekst: vrijeme (noć vs dan, sezonalnost)
+- Kontekst: trenutno stanje (broj reportova, engagement)
+- Historija: prethodni komentari istog autora
+- Feedback: prethodni feedback moderatora za slične slučajeve
+
+THINK (Kako agent zaključuje):
+- ML model: Klasifikacija (pSpam, pToxic, pHate, pOffensive)
+- Kontekstualna pravila:
+  * Novi korisnik → niži prag za Review
+  * Autor sa dobrim historijom → viši prag za Allow
+  * Diskusija sa visokim engagement → viši prag za Block
+  * Noć (manje moderatora) → niži prag za Review
+- Kombinacija: ML score + kontekstualni faktori → finalna odluka
+- Nesigurni slučajevi: Kada je ML score u "gray zone" → Review
+
+ACT (Šta agent radi):
+- Allow: Komentar se objavi, status=Approved
+- Review: Komentar ide u review queue za moderatora, status=PendingReview
+- Block: Komentar se blokira, status=Blocked, autor dobija upozorenje
+- Za svaku odluku: upiše Prediction (score, decision, confidence, context)
+
+LEARN (Kako agent uči):
+- JAK FEEDBACK LOOP:
+  * Moderator feedback: Potvrda/odbijanje odluke agenta (gold label)
+  * Korisnički feedback: Reportovi, žalbe (false negatives)
+  * Appeal proces: Korisnik se žali na blokiranje (false positives)
+  * Engagement metrike: Blokirani komentari koji su bili popularni (možda greška)
+- Adaptivni pragovi:
+  * Ako agent često greši u jednom kontekstu → prilagodi prag za taj kontekst
+  * Ako agent često greši za određeni tip sadržaja → prilagodi model
+- Retraining:
+  * Kada se nakupi dovoljno gold labels (npr. 100+ novih)
+  * Retrenira model sa novim podacima
+  * A/B testiranje: Stari vs novi model
+  * Aktivacija novog modela ako je bolji
+- Kontekstualno učenje:
+  * Uči da određeni konteksti zahtijevaju različite pragove
+  * Uči da određeni autori imaju različite obrasce
+
+ITERATIVNI TOK (šta se dešava kroz vrijeme):
+- Kontinuirano: Novi komentari dolaze → agent ih procesira
+- Kontinuirano: Moderatori daju feedback → agent uči
+- Periodično: Retraining kada se nakupi dovoljno feedbacka
+- Periodično: Ažuriranje pragova na osnovu performansi
+- Real-time: Agent prilagođava odluke na osnovu trenutnog konteksta
+
+PROŠIRENJA:
+
+1. Nesigurni slučajevi (OBAVEZNO):
+   - Agent prepoznaje kada "nije siguran" (confidence < threshold)
+   - Automatski ide u Review queue
+   - Traži feedback moderatora
+   - Uči iz tih slučajeva
+
+2. Adaptivni pragovi (OBAVEZNO):
+   - Pragovi se mijenjaju kroz vrijeme na osnovu feedbacka
+   - Različiti pragovi za različite kontekste
+   - Različiti pragovi za različite tipove sadržaja
+
+3. Multi-agent sistem (PROŠIRENJE):
+   - FastAgent: Brze odluke za očigledne slučajeve (Allow/Block)
+   - DeepAgent: Kompleksna analiza za granične slučajeve (Review)
+   - LearningAgent: Fokusiran samo na učenje i retraining
+
+4. Aktivno učenje (PROŠIRENJE):
+   - Agent identifikuje slučajeve gdje bi feedback bio najkorisniji
+   - Eksplicitno traži feedback za te slučajeve
+   - Optimizira učenje
+
+5. Objašnjenje odluka (PROŠIRENJE):
+   - Agent objašnjava zašto je donio određenu odluku
+   - "Blokirao zbog: hate speech (confidence: 0.85), autor: novi korisnik, kontekst: visok engagement"
+   - Pomaže moderatorima i korisnicima da razumiju odluke
+
+6. Simulacija okoline (PROŠIRENJE):
+   - Agent testira nove pragove na historijskim podacima prije primjene
+   - Simulira različite strategije i bira najbolju
+
+ARHITEKTURA (Clean Architecture):
+
+1. AiAgents.Core (framework):
+   - SoftwareAgent<TPercept, TAction, TResult, TExperience>
+   - IPerceptionSource<T>
+   - IPolicy<TPercept, TAction>
+   - IActuator<TAction, TResult>
+   - ILearningComponent<TExperience>
+
+2. AiAgents.ContentModerationAgent (shared logika):
+
+   a. Domain:
+   - Entiteti: Comment, Prediction, Review, ModelVersion, SystemSettings, Author, Context
+   - Enum-i: ModerationDecision (Allow, Review, Block), CommentStatus, ConfidenceLevel
+   - Pravila: Legalni statusi, labeli, odluke
+
+   b. Application:
+   - Use-case servisi:
+     * QueueService: enqueue/dequeue komentara
+     * ScoringService: score + apply thresholds + persist prediction + update status
+     * ReviewService: gold label + counter update + feedback processing
+     * TrainingService: train/retrain + model versioning + activate
+     * ContextService: izračun kontekstualnih faktora
+     * ThresholdService: upravljanje adaptivnim pragovima
+   - Runneri:
+     * ModerationAgentRunner → Sense → Think → Act
+     * RetrainAgentRunner → Sense → Think → Act → Learn
+     * ThresholdUpdateRunner → Sense → Think → Act → Learn
+
+   c. Infrastructure:
+   - ContentModerationDbContext
+   - DatabaseSeeder
+   - File storage helper (model path)
+
+   d. ML:
+   - IContentClassifier
+   - MlNetContentClassifier (load/predict/train)
+
+3. AiAgents.ContentModerationAgent.Web (host/transport):
+   - Controllers
+   - DTO mapping
+   - SignalR emit
+   - Background scheduling
+
+AGENT RUNNERI (detaljno):
+
+a. ModerationAgentRunner:
+Sense: uzmi sljedeći komentar iz queue-a (Status=Queued)
+Think: 
+  - Izračunaj ML score (pSpam, pToxic, pHate, pOffensive)
+  - Izračunaj kontekstualne faktore (author reputation, thread context, time)
+  - Kombiniraj: final score = ML score * context_multiplier
+  - Primijeni pragove: Allow/Review/Block
+Act: 
+  - Upisi Prediction (score, decision, confidence, context)
+  - Postavi status komentara (Approved/PendingReview/Blocked)
+  - Ako Blocked: upozori autora
+Output: ModerationTickResult (CommentId, Decision, Confidence, Context, NewStatus)
+
+b. RetrainAgentRunner:
+Sense: očitaj SystemSettings (NewGoldSinceLastTrain, Threshold, Enabled)
+Think: da li treba retrain? (NewGoldSinceLastTrain >= threshold)
+Act: 
+  - Pozovi TrainingService.TrainModelAsync(template, activate:true)
+  - A/B test: stari vs novi model
+  - Ako novi bolji: aktiviraj novi model
+Learn: 
+  - Reset counter
+  - Update settings
+  - Log metrike (accuracy, precision, recall)
+
+c. ThresholdUpdateRunner (proširenje):
+Sense: očitaj feedback metrike (false positive rate, false negative rate po kontekstu)
+Think: da li treba ažurirati pragove? (greška > threshold)
+Act: ažuriraj pragove za određene kontekste
+Learn: log promjene, prati efekte
+
+ODGOVORI NA PITANJA (FINALIZIRANO):
+
+1. Tip sadržaja: SVE (komentari, postovi, poruke)
+   - Unified model: Jedan Content entitet sa Type (Comment, Post, Message)
+   - Ista logika za sve tipove, ali moguće različite pragove po tipu
+
+2. ML Model: ML.NET (preporučeno)
+   - Zašto ML.NET:
+     * Integracija sa .NET ekosistemom
+     * Lighter-weight od TensorFlow/PyTorch za ovaj use case
+     * Dobra podrška za text classification
+     * Lako deployment u .NET aplikaciji
+   - Tip modela: Multi-class classification (Spam, Toxic, Hate, Offensive, Clean)
+   - Feature engineering: TF-IDF, n-grams, sentiment features
+   - Algoritam: FastTree ili LbfgsMaximumEntropy (za brzinu i tačnost)
+   - Pre-trained: Može se koristiti pre-trained model kao starting point, ali retraining je obavezan
+
+3. Feedback mehanizam (NAJBOLJE RJEŠENJE):
+   
+   a. Moderator UI (PRIMARNI):
+   - Review Queue Dashboard: Lista svih PendingReview komentara
+   - Quick Actions: Allow/Block/Edit buttons
+   - Batch Actions: Bulk approve/reject
+   - Feedback Form: 
+     * Potvrda odluke agenta (Correct/Incorrect)
+     * Kategorija problema (ako je blokirao: Spam/Toxic/Hate/Offensive)
+     * Confidence level (koliko je moderator siguran)
+   - Gold Label Assignment: Moderator eksplicitno označi kao "gold label"
+   
+   b. Korisnički Reportovi (SEKUNDARNI):
+   - Report Button: Korisnici mogu reportovati sadržaj
+   - Report Queue: Agent vidi reportovane komentare
+   - False Negative Detection: Ako je komentar bio Approved ali reportovan → potencijalna greška
+   
+   c. Appeal Proces (SEKUNDARNI):
+   - Appeal Button: Autor može žaliti se na Blocked komentar
+   - Appeal Queue: Moderator pregleda appeal
+   - False Positive Detection: Ako je appeal uspješan → potencijalna greška agenta
+   
+   d. Engagement Metrike (PASIVNI):
+   - Popularity Tracking: Blokirani komentari koji su imali visok engagement (likes, replies)
+   - Možda greška: Agent možda trebao Allow umjesto Block
+   
+   e. Aktivno učenje (PROŠIRENJE):
+   - Agent identifikuje "najkorisnije" slučajeve za feedback
+   - Eksplicitno traži feedback od moderatora za te slučajeve
+   - Optimizira učenje fokusiranjem na slučajeve gdje je feedback najvažniji
+
+4. Metrike za mjerenje uspjeha (NAJBOLJE RJEŠENJE):
+   
+   a. Osnovne ML metrike:
+   - Accuracy: Ukupna tačnost klasifikacije
+   - Precision: Tačnost pozitivnih predikcija (koliko blokiranih je stvarno problematično)
+   - Recall: Pokrivenost (koliko problematičnih je agent uhvatio)
+   - F1-Score: Harmonijska sredina precision i recall
+   - Confusion Matrix: Detaljna matrica grešaka
+   
+   b. Business metrike:
+   - False Positive Rate (FPR): Koliko legit komentara je blokirano
+   - False Negative Rate (FNR): Koliko problematičnih komentara je propušteno
+   - Moderator Workload Reduction: Koliko komentara agent automatski riješio (Allow/Block)
+   - Review Queue Size: Koliko komentara ide u review (manje = bolje)
+   - Average Response Time: Vrijeme od posta do odluke
+   
+   c. Feedback metrike:
+   - Moderator Agreement Rate: Koliko se moderator slaže sa agentom
+   - Appeal Success Rate: Koliko appealova je uspješno (false positive indikator)
+   - Report Accuracy: Koliko reportova je validno (false negative indikator)
+   - Gold Label Quality: Kvalitet gold labels (koliko su konzistentni)
+   
+   d. Kontekstualne metrike:
+   - Performance po kontekstu: Accuracy za različite kontekste (novi korisnik, stari korisnik, itd.)
+   - Performance po tipu sadržaja: Accuracy za komentare vs postove vs poruke
+   - Threshold Effectiveness: Koliko dobro pragovi rade za različite kontekste
+   
+   e. Learning metrike:
+   - Model Improvement Rate: Koliko se model poboljšava kroz vrijeme
+   - Retraining Frequency: Koliko često se retrenira
+   - New Pattern Detection: Koliko novih obrazaca agent uči
+
+5. Implementacija konteksta:
+   
+   a. Author Reputation:
+   - Historija: Broj prethodnih komentara, approval rate, report rate
+   - Reputation Score: 0-100 (viši = pouzdaniji korisnik)
+   - Account Age: Novi vs stari korisnik
+   - Previous Violations: Broj prethodnih blokiranja
+   
+   b. Thread/Discussion Context:
+   - Thread Sentiment: Sentiment cijele diskusije
+   - Engagement Level: Koliko je aktivna diskusija
+   - Topic Category: Kategorija teme (može uticati na pragove)
+   - Previous Comments in Thread: Historija komentara u istoj diskusiji
+   
+   c. Temporal Context:
+   - Time of Day: Noć vs dan (manje moderatora noću)
+   - Day of Week: Vikend vs radni dan
+   - Peak Hours: Vremena visokog engagementa
+   
+   d. Content Context:
+   - Content Type: Komentar vs post vs poruka
+   - Content Length: Kratki vs dugi sadržaj
+   - Language: Jezik sadržaja
+   - Media Presence: Ima li slike/video
+
+================================================================================
+FINALNA SPECIFIKACIJA AGENTA
+================================================================================
+
+NAZIV: Content Moderation Agent
+VRSTA: Klasifikacioni + Context-aware + Learning Agent
+DOMENA: Moderacija sadržaja (komentari, postovi, poruke)
+
+TEHNIČKI STACK:
+- Framework: .NET (C#)
+- ML Framework: ML.NET
+- Database: SQL Server / PostgreSQL (EF Core)
+- Web: ASP.NET Core
+- Real-time: SignalR
+- Architecture: Clean Architecture (Domain/Application/Infrastructure/Web)
+
+DOMEN ENTITETI:
+- Content (Id, Type, Text, AuthorId, ThreadId, Status, CreatedAt)
+- Author (Id, Username, ReputationScore, AccountAge, PreviousViolations, CreatedAt)
+- Prediction (Id, ContentId, SpamScore, ToxicScore, HateScore, OffensiveScore, 
+              FinalScore, Decision, Confidence, ContextFactors, CreatedAt)
+- Review (Id, ContentId, ModeratorId, GoldLabel, Feedback, CorrectDecision, CreatedAt)
+- ModelVersion (Id, Version, Accuracy, Precision, Recall, F1Score, IsActive, TrainedAt)
+- SystemSettings (Id, AllowThreshold, ReviewThreshold, BlockThreshold, 
+                  RetrainThreshold, NewGoldSinceLastTrain, LastRetrainDate)
+- Context (ContentId, AuthorReputation, ThreadSentiment, EngagementLevel, 
+           TimeOfDay, ContentType, Language)
+
+AGENT RUNNERI:
+
+1. ModerationAgentRunner (Sense → Think → Act):
+   - Tick: Procesira jedan komentar iz queue-a
+   - Sense: Dequeue Content (Status=Queued)
+   - Think: 
+     * ML Classification → scores (Spam, Toxic, Hate, Offensive)
+     * Context Calculation → context factors
+     * Score Combination → final score = ML_score * context_multiplier
+     * Threshold Application → Decision (Allow/Review/Block)
+   - Act:
+     * Save Prediction
+     * Update Content Status
+     * If Blocked: Notify Author
+   - Output: ModerationTickResult
+
+2. RetrainAgentRunner (Sense → Think → Act → Learn):
+   - Tick: Provjerava da li treba retrain
+   - Sense: Read SystemSettings (NewGoldSinceLastTrain, RetrainThreshold)
+   - Think: ShouldRetrain? (NewGoldSinceLastTrain >= RetrainThreshold)
+   - Act:
+     * Train New Model
+     * A/B Test (old vs new)
+     * If Better: Activate New Model
+   - Learn:
+     * Reset Counter
+     * Update Settings
+     * Log Metrics
+
+3. ThresholdUpdateRunner (Sense → Think → Act → Learn):
+   - Tick: Ažurira pragove na osnovu feedbacka
+   - Sense: Read Feedback Metrics (FPR, FNR po kontekstu)
+   - Think: ShouldUpdateThresholds? (error rate > threshold)
+   - Act: Update Thresholds for specific contexts
+   - Learn: Log Changes, Track Effects
+
+FEEDBACK MECHANISMS:
+1. Moderator UI: Review Queue Dashboard sa quick actions
+2. Korisnički Reportovi: Report button → Report Queue
+3. Appeal Proces: Appeal button → Appeal Queue
+4. Engagement Metrike: Pasivno praćenje
+5. Aktivno učenje: Eksplicitno traženje feedbacka za važne slučajeve
+
+METRIKE:
+- ML: Accuracy, Precision, Recall, F1-Score, Confusion Matrix
+- Business: FPR, FNR, Moderator Workload Reduction, Review Queue Size
+- Feedback: Moderator Agreement Rate, Appeal Success Rate, Report Accuracy
+- Kontekstualne: Performance po kontekstu i tipu sadržaja
+- Learning: Model Improvement Rate, Retraining Frequency
+
+ACCEPTANCE KRITERIJI:
+
+1. Funkcionalni:
+   ✓ Agent procesira komentare/postove/poruke iz queue-a
+   ✓ Agent klasificira sadržaj (Allow/Review/Block)
+   ✓ Agent koristi kontekstualne faktore u odluci
+   ✓ Agent prepoznaje nesigurne slučajeve (Review)
+   ✓ Moderator može dati feedback (gold label)
+   ✓ Agent uči iz feedbacka (retraining)
+   ✓ Agent prilagođava pragove na osnovu performansi
+   ✓ Web UI prikazuje review queue i omogućava feedback
+
+2. Tehnički:
+   ✓ Clean Architecture (Domain/Application/Infrastructure/Web)
+   ✓ Sense→Think→Act→Learn jasno razdvojeno
+   ✓ Agent runneri implementiraju Tick/Step logiku
+   ✓ Web sloj je tanak (nema biznis logike)
+   ✓ ML model se trenira i retrenira
+   ✓ Feedback loop funkcionalan
+   ✓ SignalR real-time updates
+
+3. Kvalitet:
+   ✓ Agent ima >80% accuracy na test setu
+   ✓ False Positive Rate <5%
+   ✓ False Negative Rate <10%
+   ✓ Moderator Agreement Rate >85%
+   ✓ Retraining se pokreće kada se nakupi 100+ gold labels
+
+PROŠIRENJA (za dodatne bodove):
+- Multi-agent sistem (FastAgent + DeepAgent + LearningAgent)
+- Aktivno učenje (agent traži feedback za važne slučajeve)
+- Objašnjenje odluka (zašto je agent donio određenu odluku)
+- Simulacija okoline (testiranje pragova prije primjene)
+
+================================================================================
+STATUS IMPLEMENTACIJE:
+================================================================================
+1. ✅ Ideja finalizirana
+2. ✅ Specifikacija gotova
+3. ✅ Acceptance kriteriji definisani
+4. ✅ Projekt struktura kreirana (Clean Architecture)
+5. ✅ Domain entiteti implementirani
+6. ✅ Application servisi i runneri implementirani
+7. ✅ ML model implementiran (ML.NET)
+8. ✅ Infrastructure implementirana (DbContext, storage)
+9. ✅ Web layer implementiran (Controllers, SignalR, Background Services)
+10. ✅ Build uspješan (0 errors, 2 warnings - non-critical)
+
+IMPLEMENTIRANO:
+- ✅ AiAgents.Core: Framework abstrakcije (SoftwareAgent, IPerceptionSource, IPolicy, IActuator, ILearningComponent)
+- ✅ Domain: Svi entiteti (Content, Author, Prediction, Review, ModelVersion, SystemSettings, Context)
+- ✅ Domain: Svi enum-i (ContentType, ContentStatus, ModerationDecision, ConfidenceLevel)
+- ✅ Application: Svi servisi (QueueService, ScoringService, ReviewService, TrainingService, ThresholdService, ContextService)
+- ✅ Application: Svi runneri (ModerationAgentRunner, RetrainAgentRunner, ThresholdUpdateRunner)
+- ✅ Infrastructure: ContentModerationDbContext sa EF Core konfiguracijom
+- ✅ ML: IContentClassifier i MlNetContentClassifier (ML.NET)
+- ✅ Web: Controllers (ContentController, ReviewController)
+- ✅ Web: SignalR Hub (ModerationHub)
+- ✅ Web: Background Services (ModerationAgentBackgroundService, RetrainAgentBackgroundService, ThresholdUpdateAgentBackgroundService)
+- ✅ Web: Program.cs sa DI konfiguracijom
+
+AGENT CIKLUSI IMPLEMENTIRANI:
+- ✅ ModerationAgentRunner: Sense → Think → Act (procesira komentare)
+- ✅ RetrainAgentRunner: Sense → Think → Act → Learn (retrenira model)
+- ✅ ThresholdUpdateRunner: Sense → Think → Act → Learn (ažurira pragove)
+
+SLJEDEĆI KORACI:
+1. ⏭️ Testiranje (unit testovi za servise i runnere)
+2. ⏭️ Poboljšanje ML modela (napredniji feature engineering)
+3. ⏭️ UI za moderatore (review queue dashboard)
+4. ⏭️ Dodati seed data za testiranje
+5. ⏭️ Optimizacija performansi
+6. ⏭️ Dokumentacija API-ja
+ 
