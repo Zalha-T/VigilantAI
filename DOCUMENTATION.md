@@ -1263,10 +1263,9 @@ Zone 3: (BlockThreshold - 1.0]    → Block (Auto-reject)
 **Visual Representation:**
 
 ```
-[Image: Number line showing three zones:
+Number line showing three zones:
 0.0 ----[Allow: 0.3]----[Review Zone]----[Block: 0.7]---- 1.0
         Auto-approve    Human review    Auto-reject
-]
 ```
 
 **Example Decisions:**
@@ -1460,8 +1459,6 @@ For image classification, download the ResNet50 ONNX model:
 
 The system will automatically detect and load the model on startup.
 
-**Image:** [Screenshot showing models folder structure with resnet50-v2-7.onnx file]
-
 ---
 
 ## Usage Guide
@@ -1469,8 +1466,6 @@ The system will automatically detect and load the model on startup.
 ### Dashboard Overview
 
 The main dashboard provides an overview of all content in the system.
-
-**Image:** [Screenshot of dashboard showing content cards with status badges, search bar, and filter dropdown]
 
 **Features:**
 - **Status Filter:** Filter content by status (All, Queued, Processing, Approved, Pending Review, Blocked)
@@ -1494,15 +1489,11 @@ The main dashboard provides an overview of all content in the system.
    - **Image:** (Only for Posts) Upload an image file
 3. Click **Submit**
 
-**Image:** [Screenshot of Create Content form with all fields visible]
-
 The content will be automatically processed by the Moderation Agent and appear on the dashboard.
 
 ### Review Queue
 
 The Review Queue shows content that requires human moderator review.
-
-**Image:** [Screenshot of Review Queue page showing pending content with Allow/Review/Block buttons]
 
 **Actions:**
 - **Allow:** Content is approved, agent decision was correct
@@ -1518,8 +1509,6 @@ Each action:
 ### Content Details
 
 Click any content card to view detailed information.
-
-**Image:** [Screenshot of Content Details page showing full content, prediction scores, image classification, and review information]
 
 **Information displayed:**
 - Full content text
@@ -1538,8 +1527,6 @@ Click any content card to view detailed information.
 
 Configure system thresholds and retraining parameters.
 
-**Image:** [Screenshot of Settings page showing threshold inputs and system status]
-
 **Moderation Thresholds:**
 - **Allow Threshold:** Content below this score is automatically approved (default: 0.3)
 - **Review Threshold:** Content between Allow and Review thresholds goes to review queue (default: 0.5)
@@ -1557,8 +1544,6 @@ Configure system thresholds and retraining parameters.
 ### Wordlist Management
 
 Manage the wordlist used for instant content filtering.
-
-**Image:** [Screenshot of Wordlist Settings page showing table of words with categories and actions]
 
 **Categories:**
 - **Toxic:** Offensive, toxic words
@@ -1736,8 +1721,6 @@ When content includes an image:
 3. **If confidence > 30%:** Image label is appended to text for wordlist checking
 4. **Special handling:** Dog images boost toxic/hate/offensive scores (example rule)
 
-**Image:** [Diagram showing image classification flow: Upload → ONNX Model → ImageNet Labels → Wordlist Check → Score Boost]
-
 ### Retraining Process
 
 **Trigger Conditions:**
@@ -1758,8 +1741,6 @@ When content includes an image:
 - Each retraining creates a new version
 - Previous versions are kept for rollback
 - Only one model is active at a time
-
-**Image:** [Flowchart showing retraining process: Check Threshold → Load Gold Labels → Train Model → Calculate Metrics → Create Version → Activate]
 
 #### ML Model Training Details
 
@@ -2230,8 +2211,6 @@ The frontend uses React hooks for state management:
 ### Real-Time Updates
 
 SignalR connection is established on app startup and listens for `ModerationResult` events. When content is processed, the dashboard automatically updates.
-
-**Image:** [Sequence diagram showing: User Action → API Call → Backend Processing → SignalR Event → Frontend Update]
 
 ### UI Features
 
