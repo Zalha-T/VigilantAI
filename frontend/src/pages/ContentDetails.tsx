@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { contentApi, Content } from '../services/api'
+import LoadingSpinner from '../components/LoadingSpinner'
 import './ContentDetails.css'
 
 const ContentDetails = () => {
@@ -20,12 +21,19 @@ const ContentDetails = () => {
   const loadContent = async () => {
     if (!id) return
     setLoading(true)
+    const startTime = Date.now()
     try {
       const data = await contentApi.getById(id)
       setContent(data)
     } catch (error) {
       console.error('Error loading content:', error)
     } finally {
+      // Ensure loading spinner is visible for at least 500ms
+      const elapsed = Date.now() - startTime
+      const minDisplayTime = 500
+      if (elapsed < minDisplayTime) {
+        await new Promise(resolve => setTimeout(resolve, minDisplayTime - elapsed))
+      }
       setLoading(false)
     }
   }
@@ -92,7 +100,7 @@ const ContentDetails = () => {
   }
 
   if (loading) {
-    return <div className="loading">Loading...</div>
+    return <LoadingSpinner />
   }
 
   if (!content) {

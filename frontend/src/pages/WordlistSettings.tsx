@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { wordlistApi, BlockedWord } from '../services/api'
+import LoadingSpinner from '../components/LoadingSpinner'
 import './Settings.css'
 
 const WordlistSettings = () => {
@@ -22,6 +23,7 @@ const WordlistSettings = () => {
   }, [])
 
   const loadWords = async () => {
+    const startTime = Date.now()
     try {
       setLoading(true)
       const data = await wordlistApi.getAll()
@@ -30,6 +32,12 @@ const WordlistSettings = () => {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error loading wordlist')
     } finally {
+      // Ensure loading spinner is visible for at least 500ms
+      const elapsed = Date.now() - startTime
+      const minDisplayTime = 500
+      if (elapsed < minDisplayTime) {
+        await new Promise(resolve => setTimeout(resolve, minDisplayTime - elapsed))
+      }
       setLoading(false)
     }
   }
@@ -111,7 +119,7 @@ const WordlistSettings = () => {
     : words.filter(w => w.category === filterCategory)
 
   if (loading) {
-    return <div className="settings-loading">Loading wordlist...</div>
+    return <LoadingSpinner />
   }
 
   return (

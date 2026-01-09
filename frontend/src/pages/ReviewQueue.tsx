@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { contentApi, PendingReviewContent } from '../services/api'
+import LoadingSpinner from '../components/LoadingSpinner'
 import './ReviewQueue.css'
 
 const ReviewQueue = () => {
@@ -15,12 +16,19 @@ const ReviewQueue = () => {
       scrollPositionRef.current = containerRef.current.scrollTop
     }
 
+    const startTime = Date.now()
     try {
       const data = await contentApi.getPendingReview()
       setContents(data)
     } catch (error) {
       console.error('Error loading pending review:', error)
     } finally {
+      // Ensure loading spinner is visible for at least 500ms
+      const elapsed = Date.now() - startTime
+      const minDisplayTime = 500
+      if (elapsed < minDisplayTime) {
+        await new Promise(resolve => setTimeout(resolve, minDisplayTime - elapsed))
+      }
       setLoading(false)
       
       // Restore scroll position after a brief delay
@@ -99,7 +107,7 @@ const ReviewQueue = () => {
       </div>
 
       {loading && contents.length === 0 ? (
-        <div className="loading">Loading...</div>
+        <LoadingSpinner />
       ) : (
         <>
           {contents.length === 0 ? (

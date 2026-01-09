@@ -1,6 +1,6 @@
-# Content Moderation Agent - Frontend
+# VigilantAI - Frontend
 
-React + TypeScript frontend aplikacija za Content Moderation Agent.
+React + TypeScript frontend aplikacija za VigilantAI.
 
 ## Features
 

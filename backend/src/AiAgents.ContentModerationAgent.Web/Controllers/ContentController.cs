@@ -36,9 +36,43 @@ public class ContentController : ControllerBase
     }
 
     [HttpPost]
-    [Consumes("multipart/form-data")]
-    public async Task<IActionResult> CreateContent([FromForm] CreateContentRequest request)
+    public async Task<IActionResult> CreateContent()
     {
+        CreateContentRequest request;
+        
+        // Check if request is form data (multipart/form-data) or JSON
+        if (Request.HasFormContentType)
+        {
+            // Bind from form data (supports file uploads)
+            request = new CreateContentRequest
+            {
+                Type = Enum.Parse<ContentType>(Request.Form["type"].ToString()),
+                Text = Request.Form["text"].ToString(),
+                AuthorUsername = Request.Form["authorUsername"].ToString(),
+                ThreadId = !string.IsNullOrEmpty(Request.Form["threadId"]) ? Guid.Parse(Request.Form["threadId"].ToString()) : null,
+                Image = Request.Form.Files.GetFile("image")
+            };
+        }
+        else
+        {
+            // Bind from JSON body - enable buffering to allow reading the body
+            Request.EnableBuffering();
+            Request.Body.Position = 0;
+            
+            using var reader = new StreamReader(Request.Body, leaveOpen: true);
+            var body = await reader.ReadToEndAsync();
+            Request.Body.Position = 0;
+            
+            request = System.Text.Json.JsonSerializer.Deserialize<CreateContentRequest>(
+                body,
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            
+            if (request == null)
+            {
+                return BadRequest(new { message = "Invalid request body" });
+            }
+        }
+
         _logger.LogInformation("========== CreateContent STARTED ==========");
         _logger.LogInformation("Content Type: {Type}, Has Image: {HasImage}", request.Type, request.Image != null && request.Image.Length > 0);
         
@@ -595,5 +629,6 @@ public class CreateContentRequest
     public string Text { get; set; } = string.Empty;
     public string AuthorUsername { get; set; } = string.Empty;
     public Guid? ThreadId { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore] // Don't try to deserialize IFormFile from JSON
     public IFormFile? Image { get; set; } // Nullable - images are optional
 }

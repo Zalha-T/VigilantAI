@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { contentApi } from '../services/api'
+import LoadingSpinner from '../components/LoadingSpinner'
 import './CreateContent.css'
 
 const CreateContent = () => {
@@ -14,8 +15,28 @@ const CreateContent = () => {
   })
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [pageLoading, setPageLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+
+  useEffect(() => {
+    // Simulate page load to show spinner
+    const startTime = Date.now()
+    const minDisplayTime = 500
+    
+    const timer = setTimeout(() => {
+      const elapsed = Date.now() - startTime
+      if (elapsed < minDisplayTime) {
+        setTimeout(() => {
+          setPageLoading(false)
+        }, minDisplayTime - elapsed)
+      } else {
+        setPageLoading(false)
+      }
+    }, 100) // Small delay to ensure spinner is visible
+
+    return () => clearTimeout(timer)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,11 +69,22 @@ const CreateContent = () => {
       setTimeout(() => {
         navigate('/')
       }, 2000)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error creating content')
+    } catch (err: any) {
+      // Extract error message from API response
+      let errorMessage = 'Error creating content'
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message
+      } else if (err.message) {
+        errorMessage = err.message
+      }
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
+  }
+
+  if (pageLoading) {
+    return <LoadingSpinner />
   }
 
   return (
@@ -86,7 +118,17 @@ const CreateContent = () => {
           <select
             id="type"
             value={formData.type}
-            onChange={(e) => setFormData({ ...formData, type: parseInt(e.target.value) })}
+            onChange={(e) => {
+              const newType = parseInt(e.target.value)
+              // Clear image if switching away from Post
+              if (newType !== 2 && formData.image) {
+                setFormData({ ...formData, type: newType, image: null })
+                setImagePreview(null)
+                setError('Image removed: Images are only allowed for Post content type.')
+              } else {
+                setFormData({ ...formData, type: newType })
+              }
+            }}
             required
             className="form-input"
           >
@@ -140,13 +182,19 @@ const CreateContent = () => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="image">Image (Optional)</label>
+          <label htmlFor="image">Image (Optional - Post only)</label>
           <input
             id="image"
             type="file"
             accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
             onChange={(e) => {
               const file = e.target.files?.[0] || null
+              // Validate content type before setting image
+              if (file && formData.type !== 2) {
+                setError('Images can only be uploaded for Post content type. Please select Post as content type first.')
+                e.target.value = '' // Clear the file input
+                return
+              }
               setFormData({ ...formData, image: file })
               if (file) {
                 const reader = new FileReader()
@@ -159,8 +207,13 @@ const CreateContent = () => {
               }
             }}
             className="form-input"
+            disabled={formData.type !== 2}
           />
-          <small>Supported formats: JPG, PNG, GIF, WebP (max 5MB)</small>
+          <small>
+            {formData.type === 2 
+              ? 'Supported formats: JPG, PNG, GIF, WebP (max 5MB)' 
+              : 'Images are only allowed for Post content type'}
+          </small>
           {imagePreview && (
             <div className="image-preview">
               <img src={imagePreview} alt="Preview" />

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { settingsApi, SystemSettings } from '../services/api'
+import LoadingSpinner from '../components/LoadingSpinner'
 import './Settings.css'
 
 const Settings = () => {
@@ -21,6 +22,7 @@ const Settings = () => {
   }, [])
 
   const loadSettings = async () => {
+    const startTime = Date.now()
     try {
       setLoading(true)
       const data = await settingsApi.get()
@@ -35,6 +37,12 @@ const Settings = () => {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error loading settings')
     } finally {
+      // Ensure loading spinner is visible for at least 500ms
+      const elapsed = Date.now() - startTime
+      const minDisplayTime = 500
+      if (elapsed < minDisplayTime) {
+        await new Promise(resolve => setTimeout(resolve, minDisplayTime - elapsed))
+      }
       setLoading(false)
     }
   }
@@ -76,7 +84,7 @@ const Settings = () => {
   }
 
   if (loading) {
-    return <div className="settings-loading">Loading settings...</div>
+    return <LoadingSpinner />
   }
 
   return (

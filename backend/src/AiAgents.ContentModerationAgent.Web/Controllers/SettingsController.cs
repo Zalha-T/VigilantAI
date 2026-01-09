@@ -26,7 +26,15 @@ public class SettingsController : ControllerBase
             settings.RetrainThreshold,
             settings.NewGoldSinceLastTrain,
             settings.LastRetrainDate,
-            settings.RetrainingEnabled
+            settings.RetrainingEnabled,
+            RetrainingStatus = new
+            {
+                CanRetrain = settings.RetrainingEnabled && settings.NewGoldSinceLastTrain >= settings.RetrainThreshold,
+                Progress = $"{settings.NewGoldSinceLastTrain} / {settings.RetrainThreshold}",
+                Percentage = settings.RetrainThreshold > 0 
+                    ? Math.Round((double)settings.NewGoldSinceLastTrain / settings.RetrainThreshold * 100, 1) 
+                    : 0
+            }
         });
     }
 

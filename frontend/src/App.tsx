@@ -13,7 +13,10 @@ function App() {
       <div className="app">
         <nav className="navbar">
           <div className="nav-container">
-            <h1 className="nav-title">Content Moderation Agent</h1>
+            <div className="nav-brand">
+              <img src="/logo.png" alt="VigilantAI Logo" className="nav-logo" />
+              <h1 className="nav-title">VigilantAI</h1>
+            </div>
             <div className="nav-links">
               <Link to="/" className="nav-link">Dashboard</Link>
               <Link to="/review" className="nav-link">Review Queue</Link>

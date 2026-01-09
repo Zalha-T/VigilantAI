@@ -11,6 +11,9 @@ obj/
 *.log
 *.vs/
 .vs/
+
+# Visual Studio solution files in root (auto-generated)
+AiAgents.sln
 *.userosscache
 *.sln.docstates
 *.userprefs

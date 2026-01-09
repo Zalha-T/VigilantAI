@@ -51,8 +51,17 @@ builder.Services.AddScoped<IQueueService, QueueService>();
           sp.GetRequiredService<IThresholdService>(),
           sp.GetService<IImageClassifier>(),
           sp.GetService<IWordlistService>())); // Inject IWordlistService for image label checking
-builder.Services.AddScoped<IReviewService, ReviewService>();
-builder.Services.AddScoped<ITrainingService, TrainingService>();
+builder.Services.AddScoped<IReviewService>(sp => 
+    new ReviewService(
+        sp.GetRequiredService<ContentModerationDbContext>(),
+        sp.GetRequiredService<ITrainingService>(),
+        sp.GetRequiredService<ILogger<ReviewService>>())); // Inject ITrainingService for immediate retraining
+builder.Services.AddScoped<ITrainingService>(sp => 
+    new TrainingService(
+        sp.GetRequiredService<ContentModerationDbContext>(),
+        sp.GetRequiredService<IContentClassifier>(),
+        sp.GetRequiredService<IThresholdService>(),
+        sp.GetRequiredService<ILogger<TrainingService>>()));
 builder.Services.AddScoped<IThresholdService, ThresholdService>();
 builder.Services.AddScoped<IContextService, ContextService>();
 builder.Services.AddScoped<IWordlistService, WordlistService>();

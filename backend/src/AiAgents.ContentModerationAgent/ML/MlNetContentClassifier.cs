@@ -168,10 +168,10 @@ public class MlNetContentClassifier : IContentClassifier
             trainingData.Add(new ContentInput { Text = review.Content.Text });
             labels.Add(new ContentLabel
             {
-                IsSpam = review.GoldLabel == ModerationDecision.Block ? 1f : 0f,
-                IsToxic = review.GoldLabel == ModerationDecision.Block ? 1f : 0f,
-                IsHate = review.GoldLabel == ModerationDecision.Block ? 1f : 0f,
-                IsOffensive = review.GoldLabel == ModerationDecision.Block ? 1f : 0f
+                IsSpam = review.GoldLabel == ModerationDecision.Block,
+                IsToxic = review.GoldLabel == ModerationDecision.Block,
+                IsHate = review.GoldLabel == ModerationDecision.Block,
+                IsOffensive = review.GoldLabel == ModerationDecision.Block
             });
         }
 
@@ -203,13 +203,19 @@ public class MlNetContentClassifier : IContentClassifier
 
         _model = model;
 
+        // Calculate F1Score, handling division by zero (when precision + recall = 0)
+        var precision = metrics.PositivePrecision;
+        var recall = metrics.PositiveRecall;
+        var f1Score = (precision + recall) > 0
+            ? 2 * (precision * recall) / (precision + recall)
+            : 0.0; // If both are 0, F1Score is 0 (not NaN)
+
         return new ModelMetrics
         {
             Accuracy = metrics.Accuracy,
-            Precision = metrics.PositivePrecision,
-            Recall = metrics.PositiveRecall,
-            F1Score = 2 * (metrics.PositivePrecision * metrics.PositiveRecall) / 
-                     (metrics.PositivePrecision + metrics.PositiveRecall)
+            Precision = precision,
+            Recall = recall,
+            F1Score = f1Score
         };
     }
 
@@ -251,17 +257,17 @@ internal class ContentPrediction
 
 internal class ContentLabel
 {
-    public float IsSpam { get; set; }
-    public float IsToxic { get; set; }
-    public float IsHate { get; set; }
-    public float IsOffensive { get; set; }
+    public bool IsSpam { get; set; }
+    public bool IsToxic { get; set; }
+    public bool IsHate { get; set; }
+    public bool IsOffensive { get; set; }
 }
 
 internal class TrainingData
 {
     public string Text { get; set; } = string.Empty;
-    public float IsSpam { get; set; }
-    public float IsToxic { get; set; }
-    public float IsHate { get; set; }
-    public float IsOffensive { get; set; }
+    public bool IsSpam { get; set; }
+    public bool IsToxic { get; set; }
+    public bool IsHate { get; set; }
+    public bool IsOffensive { get; set; }
 }

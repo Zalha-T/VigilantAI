@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { contentApi, Content } from '../services/api'
 import { onModerationResult } from '../services/signalr'
+import LoadingSpinner from '../components/LoadingSpinner'
 import './Dashboard.css'
 
 const Dashboard = () => {
@@ -13,6 +14,7 @@ const Dashboard = () => {
 
   const loadContents = async () => {
     setLoading(true)
+    const startTime = Date.now()
     try {
       const response = await contentApi.getAll(statusFilter, page, 50)
       setContents(response.data)
@@ -20,6 +22,12 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Error loading contents:', error)
     } finally {
+      // Ensure loading spinner is visible for at least 500ms
+      const elapsed = Date.now() - startTime
+      const minDisplayTime = 500
+      if (elapsed < minDisplayTime) {
+        await new Promise(resolve => setTimeout(resolve, minDisplayTime - elapsed))
+      }
       setLoading(false)
     }
   }
@@ -106,7 +114,7 @@ const Dashboard = () => {
       </div>
 
       {loading ? (
-        <div className="loading">Loading...</div>
+        <LoadingSpinner />
       ) : (
         <>
           <div className="content-grid">
