@@ -182,45 +182,81 @@ const ContentDetails = () => {
           </div>
         )}
 
-        {content.prediction && (
-          <div className="details-section">
-            <h3>Agent Prediction</h3>
-            <div className="prediction-details">
+        <div className="details-section">
+          <h3>Agent Prediction</h3>
+          <div className="prediction-details">
+            {content.prediction ? (
+              <>
+                <div className="prediction-item">
+                  <strong>Decision:</strong> {content.prediction.decision === 1 ? 'Allow' : content.prediction.decision === 2 ? 'Review' : 'Block'}
+                </div>
+                <div className="prediction-item">
+                  <strong>Final Score:</strong> {content.prediction.finalScore.toFixed(3)}
+                </div>
+              </>
+            ) : (
               <div className="prediction-item">
-                <strong>Decision:</strong> {content.prediction.decision === 1 ? 'Allow' : content.prediction.decision === 2 ? 'Review' : 'Block'}
+                <strong>Status:</strong> <span style={{ color: '#888' }}>
+                  {content.status === 1 ? 'Queued - waiting for agent processing' : 
+                   content.status === 2 ? 'Processing - agent is analyzing content' : 
+                   'No prediction available'}
+                </span>
               </div>
-              <div className="prediction-item">
-                <strong>Final Score:</strong> {content.prediction.finalScore.toFixed(3)}
+            )}
+            <div className="prediction-scores">
+              <div className="score-item">
+                <span>Spam:</span> <span className="score-value">
+                  {content.prediction ? content.prediction.spamScore.toFixed(2) : '0.00'}
+                </span>
               </div>
-              <div className="prediction-scores">
-                <div className="score-item">
-                  <span>Spam:</span> <span className="score-value">{content.prediction.spamScore.toFixed(3)}</span>
-                </div>
-                <div className="score-item">
-                  <span>Toxic:</span> <span className="score-value">{content.prediction.toxicScore.toFixed(3)}</span>
-                </div>
-                <div className="score-item">
-                  <span>Hate:</span> <span className="score-value">{content.prediction.hateScore.toFixed(3)}</span>
-                </div>
-                <div className="score-item">
-                  <span>Offensive:</span> <span className="score-value">{content.prediction.offensiveScore.toFixed(3)}</span>
-                </div>
+              <div className="score-item">
+                <span>Toxic:</span> <span className="score-value">
+                  {content.prediction ? content.prediction.toxicScore.toFixed(2) : '0.00'}
+                </span>
               </div>
+              <div className="score-item">
+                <span>Hate:</span> <span className="score-value">
+                  {content.prediction ? content.prediction.hateScore.toFixed(2) : '0.00'}
+                </span>
+              </div>
+              <div className="score-item">
+                <span>Offensive:</span> <span className="score-value">
+                  {content.prediction ? content.prediction.offensiveScore.toFixed(2) : '0.00'}
+                </span>
+              </div>
+            </div>
+            {content.prediction && (
               <div className="prediction-labels">
                 <h4>Labels:</h4>
                 <div className="labels-list">
-                  {content.labels.isSpam && <span className="label-badge label-spam">Spam</span>}
-                  {content.labels.isToxic && <span className="label-badge label-toxic">Toxic</span>}
-                  {content.labels.isHate && <span className="label-badge label-hate">Hate</span>}
-                  {content.labels.isOffensive && <span className="label-badge label-offensive">Offensive</span>}
+                  {content.labels.isSpam && (
+                    <span className="label-badge label-spam">
+                      Spam {content.prediction && `(${content.prediction.spamScore.toFixed(2)})`}
+                    </span>
+                  )}
+                  {content.labels.isToxic && (
+                    <span className="label-badge label-toxic">
+                      Toxic {content.prediction && `(${content.prediction.toxicScore.toFixed(2)})`}
+                    </span>
+                  )}
+                  {content.labels.isHate && (
+                    <span className="label-badge label-hate">
+                      Hate {content.prediction && `(${content.prediction.hateScore.toFixed(2)})`}
+                    </span>
+                  )}
+                  {content.labels.isOffensive && (
+                    <span className="label-badge label-offensive">
+                      Offensive {content.prediction && `(${content.prediction.offensiveScore.toFixed(2)})`}
+                    </span>
+                  )}
                   {!content.labels.isSpam && !content.labels.isToxic && !content.labels.isHate && !content.labels.isOffensive && (
                     <span className="no-labels">No problematic labels</span>
                   )}
                 </div>
               </div>
-            </div>
+            )}
           </div>
-        )}
+        </div>
 
         {content.review && (
           <div className="details-section">

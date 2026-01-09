@@ -74,8 +74,8 @@ builder.Services.AddSingleton<IImageClassifier>(sp =>
     
     // ContentRootPath in ASP.NET Core points to bin/Debug/net8.0/ during runtime
     // We need to go up to the project root where .csproj is located
-    // Project root: src/AiAgents.ContentModerationAgent.Web/
-    // Models should be in: src/AiAgents.ContentModerationAgent.Web/models/
+    // Project root: backend/src/AiAgents.ContentModerationAgent.Web/
+    // Models should be in: backend/src/AiAgents.ContentModerationAgent.Web/models/
     
     var contentRoot = env.ContentRootPath;
     programLogger.LogInformation("========== INITIALIZING IMAGE CLASSIFIER ==========");
@@ -97,14 +97,9 @@ builder.Services.AddSingleton<IImageClassifier>(sp =>
     var modelsDir = Path.Combine(projectRoot, "models");
     var fullModelsPath = Path.GetFullPath(modelsDir);
     
-    // Also check the known location
-    var knownModelPath = @"C:\Users\HOME\Desktop\AI Agent\src\AiAgents.ContentModerationAgent.Web\models\resnet50-v2-7.onnx";
-    
     programLogger.LogInformation($"[Program] Project root: {projectRoot}");
     programLogger.LogInformation($"[Program] Models directory: {fullModelsPath}");
     programLogger.LogInformation($"[Program] Models directory exists: {Directory.Exists(fullModelsPath)}");
-    programLogger.LogInformation($"[Program] Known model path: {knownModelPath}");
-    programLogger.LogInformation($"[Program] Known model exists: {System.IO.File.Exists(knownModelPath)}");
     
     if (Directory.Exists(fullModelsPath))
     {
@@ -119,10 +114,8 @@ builder.Services.AddSingleton<IImageClassifier>(sp =>
         }
     }
     
-    // Use known path if it exists, otherwise use calculated path
-    var finalModelsPath = System.IO.File.Exists(knownModelPath) 
-        ? Path.GetDirectoryName(knownModelPath)! 
-        : fullModelsPath;
+    // Use calculated path
+    var finalModelsPath = fullModelsPath;
     
     programLogger.LogInformation($"[Program] Final models path: {finalModelsPath}");
     programLogger.LogInformation("========== IMAGE CLASSIFIER INITIALIZED ==========");

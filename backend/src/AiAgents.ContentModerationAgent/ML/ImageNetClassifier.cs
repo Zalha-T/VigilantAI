@@ -717,7 +717,7 @@ public class ImageNetClassifier : IImageClassifier
                         // IMPORTANT: Check top 5 predictions for weapon-related labels
                         // ImageNet model sometimes misclassifies weapons (e.g., gun -> table lamp)
                         // If any of the top 5 predictions contains weapon keywords, prioritize it
-                        var weaponKeywords = new[] { "gun", "pistol", "rifle", "assault rifle", "weapon", "firearm", "revolver" };
+                        var weaponKeywords = new[] { "gun", "pistol", "rifle", "assault rifle", "weapon", "firearm" };
                         var weaponPrediction = topPredictions.FirstOrDefault(p => 
                             weaponKeywords.Any(keyword => p.Label.ToLowerInvariant().Contains(keyword.ToLowerInvariant())));
                         

@@ -147,21 +147,40 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: #252525;
+  border-radius: 8px;
+  border: 1px solid #404040;
 }
 
 .score-item {
   display: flex;
   justify-content: space-between;
-  padding: 0.75rem;
+  align-items: center;
+  padding: 1rem;
   background-color: #1a1a1a;
-  border-radius: 4px;
+  border-radius: 6px;
   color: #e0e0e0;
+  font-size: 1.05rem;
+  border-left: 3px solid #4a9eff;
+  transition: background-color 0.2s;
+}
+
+.score-item:hover {
+  background-color: #222;
+}
+
+.score-item span:first-child {
+  font-weight: 600;
+  color: #ccc;
 }
 
 .score-value {
-  font-weight: 600;
+  font-weight: 700;
   color: #4a9eff;
+  font-size: 1.2rem;
+  font-family: 'Courier New', monospace;
 }
 
 .prediction-labels {

@@ -122,5 +122,5 @@ packages/
 *.old
 
 # Uploaded images (keep folder structure but ignore contents)
-src/AiAgents.ContentModerationAgent.Web/wwwroot/uploads/images/*
-!src/AiAgents.ContentModerationAgent.Web/wwwroot/uploads/images/.gitkeep
+backend/src/AiAgents.ContentModerationAgent.Web/wwwroot/uploads/images/*
+!backend/src/AiAgents.ContentModerationAgent.Web/wwwroot/uploads/images/.gitkeep
