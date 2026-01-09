@@ -138,10 +138,7 @@ VigilantAI/
 │       ├── AiAgents.ContentModerationAgent/  # Agent logic
 │       └── AiAgents.ContentModerationAgent.Web/  # Web host
 ├── frontend/                           # React frontend
-├── DOCUMENTATION.md                    # Full documentation
-├── API_USAGE_GUIDE.md                  # API reference
-├── TESTING_GUIDE.md                    # Testing guide
-└── TROUBLESHOOTING.md                  # Troubleshooting
+└── DOCUMENTATION.md                    # Full documentation
 ```
 
 ## 🔑 Key Concepts
