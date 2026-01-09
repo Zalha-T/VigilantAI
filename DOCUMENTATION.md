@@ -1977,37 +1977,32 @@ SignalR connection is established on app startup and listens for `ModerationResu
 
 ### Planned Features
 
-1. **Active Learning**
-   - Agent identifies uncertain cases
-   - Requests human review for ambiguous content
-   - Prioritizes learning from edge cases
-
-2. **Adaptive Thresholds**
+1. **Adaptive Thresholds**
    - Automatic threshold adjustment based on performance
    - A/B testing of threshold values
    - Performance-based optimization
 
-3. **Explanation System**
+2. **Explanation System**
    - "Why did the agent make this decision?"
    - Highlights contributing factors
    - Shows which words/patterns triggered scores
 
-4. **Multi-Agent Coordination**
+3. **Multi-Agent Coordination**
    - Specialized agents for different content types
    - Agent communication and consensus
    - Load balancing across agents
 
-5. **Sentiment Analysis**
+4. **Sentiment Analysis**
    - Thread sentiment calculation
    - Context-aware decision making
    - Engagement pattern analysis
 
-6. **Advanced Image Analysis**
+5. **Advanced Image Analysis**
    - Object detection (not just classification)
    - Text extraction from images (OCR)
    - NSFW detection
 
-7. **Simulation Environment**
+6. **Simulation Environment**
    - Test agent behavior before deployment
    - Simulate different scenarios
    - Performance testing
