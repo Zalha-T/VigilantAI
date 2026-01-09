@@ -111,9 +111,10 @@ export interface SubmitReviewRequest {
 
 export const contentApi = {
   // Get all content with pagination
-  getAll: async (status?: number, page: number = 1, pageSize: number = 50): Promise<ContentListResponse> => {
+  getAll: async (status?: number, search?: string, page: number = 1, pageSize: number = 50): Promise<ContentListResponse> => {
     const params: any = { page, pageSize }
     if (status !== undefined) params.status = status
+    if (search && search.trim()) params.search = search.trim()
     const response = await api.get<ContentListResponse>('/content', { params })
     return response.data
   },

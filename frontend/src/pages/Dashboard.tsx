@@ -9,6 +9,7 @@ const Dashboard = () => {
   const [contents, setContents] = useState<Content[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<number | undefined>(undefined)
+  const [searchQuery, setSearchQuery] = useState<string>('')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
@@ -16,7 +17,7 @@ const Dashboard = () => {
     setLoading(true)
     const startTime = Date.now()
     try {
-      const response = await contentApi.getAll(statusFilter, page, 50)
+      const response = await contentApi.getAll(statusFilter, searchQuery || undefined, page, 50)
       setContents(response.data)
       setTotalPages(response.totalPages)
     } catch (error) {
@@ -40,7 +41,14 @@ const Dashboard = () => {
       // Refresh content when new moderation result arrives
       loadContents()
     })
-  }, [statusFilter, page])
+  }, [statusFilter, page]) // Removed searchQuery - search only triggers on Enter
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      setPage(1) // Reset to first page on search
+      loadContents()
+    }
+  }
 
   const getStatusLabel = (status: number): string => {
     const labels: { [key: number]: string } = {
@@ -97,9 +105,35 @@ const Dashboard = () => {
       <div className="dashboard-header">
         <h2>Content Dashboard</h2>
         <div className="dashboard-controls">
+          <div className="search-container">
+            <input
+              type="text"
+              placeholder="Search content or author..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={handleSearchKeyPress}
+              className="search-input"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery('')
+                  setPage(1)
+                  loadContents()
+                }}
+                className="search-clear-btn"
+                title="Clear search"
+              >
+                ✕
+              </button>
+            )}
+          </div>
           <select
             value={statusFilter || ''}
-            onChange={(e) => setStatusFilter(e.target.value ? parseInt(e.target.value) : undefined)}
+            onChange={(e) => {
+              setStatusFilter(e.target.value ? parseInt(e.target.value) : undefined)
+              setPage(1)
+            }}
             className="filter-select"
           >
             <option value="">All Statuses</option>

@@ -415,6 +415,7 @@ public class ContentController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAllContent(
         [FromQuery] ContentStatus? status = null,
+        [FromQuery] string? search = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50)
     {
@@ -428,6 +429,15 @@ public class ContentController : ControllerBase
         if (status.HasValue)
         {
             query = query.Where(c => c.Status == status.Value);
+        }
+
+        // Search by text or author username if provided
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var searchLower = search.ToLower();
+            query = query.Where(c => 
+                c.Text.ToLower().Contains(searchLower) || 
+                c.Author.Username.ToLower().Contains(searchLower));
         }
 
         var totalCount = await query.CountAsync();
