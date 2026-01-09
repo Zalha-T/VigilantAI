@@ -12,7 +12,7 @@ obj/
 *.vs/
 .vs/
 
-# Visual Studio solution files in root (auto-generated)
+# Visual Studio solution files (auto-generated in root by VS)
 AiAgents.sln
 *.userosscache
 *.sln.docstates

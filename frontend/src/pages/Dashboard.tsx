@@ -4,6 +4,8 @@ import { contentApi, Content } from '../services/api'
 import { onModerationResult } from '../services/signalr'
 import LoadingSpinner from '../components/LoadingSpinner'
 import SkeletonCard from '../components/SkeletonCard'
+import ConfirmDialog from '../components/ConfirmDialog'
+import { showToast } from '../components/ToastContainer'
 import './Dashboard.css'
 
 const Dashboard = () => {
@@ -13,6 +15,10 @@ const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; contentId: string | null }>({
+    isOpen: false,
+    contentId: null
+  })
 
   const loadContents = async () => {
     setLoading(true)
@@ -83,23 +89,30 @@ const Dashboard = () => {
     return labels[decision] || 'Unknown'
   }
 
-  const handleDelete = async (e: React.MouseEvent, contentId: string) => {
+  const handleDeleteClick = (e: React.MouseEvent, contentId: string) => {
     e.preventDefault()
     e.stopPropagation()
-    
-    if (!window.confirm('Are you sure you want to delete this content? This action cannot be undone.')) {
-      return
-    }
+    setDeleteConfirm({ isOpen: true, contentId })
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm.contentId) return
 
     try {
-      await contentApi.delete(contentId)
+      await contentApi.delete(deleteConfirm.contentId)
       // Remove from list immediately
-      setContents(prev => prev.filter(c => c.id !== contentId))
+      setContents(prev => prev.filter(c => c.id !== deleteConfirm.contentId))
       showToast('Content deleted successfully', 'success')
     } catch (error) {
       console.error('Error deleting content:', error)
       showToast('Error deleting content. Please try again.', 'error')
+    } finally {
+      setDeleteConfirm({ isOpen: false, contentId: null })
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirm({ isOpen: false, contentId: null })
   }
 
   return (
@@ -198,7 +211,7 @@ const Dashboard = () => {
                 )}
                 </Link>
                 <button
-                  onClick={(e) => handleDelete(e, content.id)}
+                  onClick={(e) => handleDeleteClick(e, content.id)}
                   className="delete-btn"
                   title="Delete content"
                 >
@@ -233,6 +246,17 @@ const Dashboard = () => {
           )}
         </>
       )}
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        title="Delete Content"
+        message="Are you sure you want to delete this content? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
     </div>
   )
 }

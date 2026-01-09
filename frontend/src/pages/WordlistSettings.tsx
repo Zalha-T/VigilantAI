@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { wordlistApi, BlockedWord } from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
+import ConfirmDialog from '../components/ConfirmDialog'
 import { showToast } from '../components/ToastContainer'
 import './Settings.css'
 
@@ -68,15 +69,17 @@ const WordlistSettings = () => {
     }
   }
 
-  const handleDeleteWord = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this word?')) {
-      return
-    }
+  const handleDeleteWordClick = (id: string) => {
+    setDeleteConfirm({ isOpen: true, wordId: id })
+  }
+
+  const handleDeleteWordConfirm = async () => {
+    if (!deleteConfirm.wordId) return
 
     try {
       setError(null)
       setSuccess(null)
-      await wordlistApi.delete(id)
+      await wordlistApi.delete(deleteConfirm.wordId)
       setSuccess('Word deleted successfully!')
       showToast('Word deleted successfully!', 'success')
       await loadWords()
@@ -84,7 +87,13 @@ const WordlistSettings = () => {
       const errorMsg = err instanceof Error ? err.message : 'Error deleting word'
       setError(errorMsg)
       showToast(errorMsg, 'error')
+    } finally {
+      setDeleteConfirm({ isOpen: false, wordId: null })
     }
+  }
+
+  const handleDeleteWordCancel = () => {
+    setDeleteConfirm({ isOpen: false, wordId: null })
   }
 
   const handleToggleActive = async (word: BlockedWord) => {
@@ -289,7 +298,7 @@ const WordlistSettings = () => {
                             {word.isActive ? 'Deactivate' : 'Activate'}
                           </button>
                           <button
-                            onClick={() => handleDeleteWord(word.id)}
+                            onClick={() => handleDeleteWordClick(word.id)}
                             className="delete-btn-small"
                           >
                             Delete
@@ -304,6 +313,17 @@ const WordlistSettings = () => {
           </table>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        title="Delete Word"
+        message="Are you sure you want to delete this word?"
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={handleDeleteWordConfirm}
+        onCancel={handleDeleteWordCancel}
+      />
     </div>
   )
 }

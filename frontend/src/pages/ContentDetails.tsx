@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { contentApi, Content } from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
+import ConfirmDialog from '../components/ConfirmDialog'
 import { showToast } from '../components/ToastContainer'
 import './ContentDetails.css'
 
@@ -12,6 +13,8 @@ const ContentDetails = () => {
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
   const [sendingToReview, setSendingToReview] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState(false)
+  const [reviewConfirm, setReviewConfirm] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -61,12 +64,12 @@ const ContentDetails = () => {
     return classes[status] || ''
   }
 
-  const handleDelete = async () => {
+  const handleDeleteClick = () => {
+    setDeleteConfirm(true)
+  }
+
+  const handleDeleteConfirm = async () => {
     if (!id) return
-    
-    if (!window.confirm('Are you sure you want to delete this content? This action cannot be undone.')) {
-      return
-    }
 
     setDeleting(true)
     try {
@@ -77,15 +80,21 @@ const ContentDetails = () => {
       console.error('Error deleting content:', error)
       showToast('Error deleting content. Please try again.', 'error')
       setDeleting(false)
+    } finally {
+      setDeleteConfirm(false)
     }
   }
 
-  const handleSendToReview = async () => {
-    if (!id) return
+  const handleDeleteCancel = () => {
+    setDeleteConfirm(false)
+  }
 
-    if (!window.confirm('Send this content to Review Queue? It will be available for moderator review.')) {
-      return
-    }
+  const handleSendToReviewClick = () => {
+    setReviewConfirm(true)
+  }
+
+  const handleSendToReviewConfirm = async () => {
+    if (!id) return
 
     setSendingToReview(true)
     try {
@@ -98,7 +107,12 @@ const ContentDetails = () => {
       showToast('Error sending content to review. Please try again.', 'error')
     } finally {
       setSendingToReview(false)
+      setReviewConfirm(false)
     }
+  }
+
+  const handleSendToReviewCancel = () => {
+    setReviewConfirm(false)
   }
 
   if (loading) {
@@ -122,7 +136,7 @@ const ContentDetails = () => {
           <div className="action-buttons">
             {content.status !== 4 && (
               <button
-                onClick={handleSendToReview}
+                onClick={handleSendToReviewClick}
                 disabled={sendingToReview}
                 className="review-btn"
               >
@@ -130,7 +144,7 @@ const ContentDetails = () => {
               </button>
             )}
             <button
-              onClick={handleDelete}
+              onClick={handleDeleteClick}
               disabled={deleting}
               className="delete-btn"
             >
@@ -289,6 +303,28 @@ const ContentDetails = () => {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={deleteConfirm}
+        title="Delete Content"
+        message="Are you sure you want to delete this content? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
+
+      <ConfirmDialog
+        isOpen={reviewConfirm}
+        title="Send to Review Queue"
+        message="Send this content to Review Queue? It will be available for moderator review."
+        confirmText="Send"
+        cancelText="Cancel"
+        type="info"
+        onConfirm={handleSendToReviewConfirm}
+        onCancel={handleSendToReviewCancel}
+      />
     </div>
   )
 }
