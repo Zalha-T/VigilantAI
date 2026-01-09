@@ -28,7 +28,7 @@ const Dashboard = () => {
     loadContents()
 
     // Setup SignalR for real-time updates
-    onModerationResult((result) => {
+    onModerationResult(() => {
       // Refresh content when new moderation result arrives
       loadContents()
     })

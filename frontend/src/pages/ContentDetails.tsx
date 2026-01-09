@@ -151,6 +151,37 @@ const ContentDetails = () => {
           </div>
         </div>
 
+        {content.image && (
+          <div className="details-section">
+            <h3>Image</h3>
+            <div className="image-section">
+              <img 
+                src={`https://localhost:60830${content.image.url}`} 
+                alt={content.image.originalFileName}
+                className="content-image"
+              />
+              {content.image.classification && (
+                <div className="image-classification">
+                  <div className={`classification-result ${content.image.classification.isBlocked ? 'blocked' : 'allowed'}`}>
+                    <strong>Detected:</strong> {content.image.classification.label} 
+                    ({(content.image.classification.confidence * 100).toFixed(1)}% confidence)
+                    {content.image.classification.isBlocked ? (
+                      <span className="blocked-badge"> - BLOCKED</span>
+                    ) : (
+                      <span className="allowed-badge"> - Allowed</span>
+                    )}
+                  </div>
+                  {content.image.classification.details && (
+                    <div className="classification-details">
+                      {content.image.classification.details}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {content.prediction && (
           <div className="details-section">
             <h3>Agent Prediction</h3>

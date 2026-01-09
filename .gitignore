@@ -120,3 +120,7 @@ packages/
 # Backup files
 *.backup
 *.old
+
+# Uploaded images (keep folder structure but ignore contents)
+src/AiAgents.ContentModerationAgent.Web/wwwroot/uploads/images/*
+!src/AiAgents.ContentModerationAgent.Web/wwwroot/uploads/images/.gitkeep

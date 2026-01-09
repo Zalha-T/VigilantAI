@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { wordlistApi, BlockedWord, AddWordRequest } from '../services/api'
+import { wordlistApi, BlockedWord } from '../services/api'
 import './Settings.css'
 
 const WordlistSettings = () => {

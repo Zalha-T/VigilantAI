@@ -18,4 +18,5 @@ public class Content
     public ICollection<Prediction> Predictions { get; set; } = new List<Prediction>();
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
     public Context? Context { get; set; }
+    public ContentImage? Image { get; set; }
 }

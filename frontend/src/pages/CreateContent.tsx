@@ -9,8 +9,10 @@ const CreateContent = () => {
     type: 1, // Comment
     text: '',
     authorUsername: '',
-    threadId: null as string | null
+    threadId: null as string | null,
+    image: null as File | null
   })
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -22,11 +24,12 @@ const CreateContent = () => {
     setSuccess(false)
 
     try {
-      const response = await contentApi.create({
+      await contentApi.create({
         type: formData.type,
         text: formData.text,
         authorUsername: formData.authorUsername || 'anonymous',
-        threadId: formData.threadId || null
+        threadId: formData.threadId || null,
+        image: formData.image
       })
 
       setSuccess(true)
@@ -36,8 +39,10 @@ const CreateContent = () => {
         type: 1,
         text: '',
         authorUsername: '',
-        threadId: null
+        threadId: null,
+        image: null
       })
+      setImagePreview(null)
 
       // Redirect to dashboard after 2 seconds
       setTimeout(() => {
@@ -132,6 +137,45 @@ const CreateContent = () => {
             placeholder="Enter thread ID if this is a reply"
           />
           <small>Leave empty if this is a new thread</small>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="image">Image (Optional)</label>
+          <input
+            id="image"
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+            onChange={(e) => {
+              const file = e.target.files?.[0] || null
+              setFormData({ ...formData, image: file })
+              if (file) {
+                const reader = new FileReader()
+                reader.onloadend = () => {
+                  setImagePreview(reader.result as string)
+                }
+                reader.readAsDataURL(file)
+              } else {
+                setImagePreview(null)
+              }
+            }}
+            className="form-input"
+          />
+          <small>Supported formats: JPG, PNG, GIF, WebP (max 5MB)</small>
+          {imagePreview && (
+            <div className="image-preview">
+              <img src={imagePreview} alt="Preview" />
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData({ ...formData, image: null })
+                  setImagePreview(null)
+                }}
+                className="remove-image-btn"
+              >
+                Remove Image
+              </button>
+            </div>
+          )}
         </div>
 
         {error && (

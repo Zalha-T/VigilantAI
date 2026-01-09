@@ -43,6 +43,7 @@ export interface Content {
     agentDecision: number | null
     humanLabel: number | null
   }
+  image?: ContentImage | null
 }
 
 // Simplified content for pending review (from API)
@@ -80,6 +81,25 @@ export interface CreateContentRequest {
   text: string
   authorUsername: string
   threadId?: string | null
+  image?: File | null
+}
+
+export interface ContentImage {
+  id: string
+  fileName: string
+  originalFileName: string
+  url: string
+  classification: {
+    label: string
+    confidence: number
+    isBlocked: boolean
+    details: string
+    topPredictions?: Array<{
+      label: string
+      confidence: number
+      classIndex: number
+    }>
+  } | null
 }
 
 export interface SubmitReviewRequest {
@@ -111,9 +131,34 @@ export const contentApi = {
   },
 
   // Create new content
-  create: async (data: CreateContentRequest): Promise<{ contentId: string; status: string }> => {
-    const response = await api.post('/content', data)
-    return response.data
+  create: async (data: CreateContentRequest): Promise<{ contentId: string; status: string; imageId?: string; imageClassification?: any }> => {
+    // If image is provided, use FormData
+    if (data.image) {
+      const formData = new FormData()
+      formData.append('type', data.type.toString())
+      formData.append('text', data.text)
+      formData.append('authorUsername', data.authorUsername)
+      if (data.threadId) {
+        formData.append('threadId', data.threadId)
+      }
+      formData.append('image', data.image)
+      
+      const response = await api.post('/content', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      return response.data
+    } else {
+      // No image, use JSON
+      const response = await api.post('/content', {
+        type: data.type,
+        text: data.text,
+        authorUsername: data.authorUsername,
+        threadId: data.threadId || null
+      })
+      return response.data
+    }
   },
 
   // Submit review (gold label)

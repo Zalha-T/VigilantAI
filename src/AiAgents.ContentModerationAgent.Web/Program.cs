@@ -4,6 +4,7 @@ using AiAgents.ContentModerationAgent.Infrastructure;
 using AiAgents.ContentModerationAgent.ML;
 using AiAgents.ContentModerationAgent.Web.BackgroundServices;
 using AiAgents.ContentModerationAgent.Web.Hubs;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -42,16 +43,92 @@ builder.Services.AddDbContext<ContentModerationDbContext>(options =>
 
 // Application Services
 builder.Services.AddScoped<IQueueService, QueueService>();
-builder.Services.AddScoped<IScoringService, ScoringService>();
+  builder.Services.AddScoped<IScoringService>(sp => 
+      new ScoringService(
+          sp.GetRequiredService<ContentModerationDbContext>(),
+          sp.GetRequiredService<IContentClassifier>(),
+          sp.GetRequiredService<IContextService>(),
+          sp.GetRequiredService<IThresholdService>(),
+          sp.GetService<IImageClassifier>(),
+          sp.GetService<IWordlistService>())); // Inject IWordlistService for image label checking
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<ITrainingService, TrainingService>();
 builder.Services.AddScoped<IThresholdService, ThresholdService>();
 builder.Services.AddScoped<IContextService, ContextService>();
 builder.Services.AddScoped<IWordlistService, WordlistService>();
+builder.Services.AddScoped<IImageStorageService>(sp =>
+{
+    var env = sp.GetRequiredService<IWebHostEnvironment>();
+    var basePath = Path.Combine(env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot"), "uploads", "images");
+    return new ImageStorageService(basePath);
+});
 
 // ML
 builder.Services.AddSingleton<IContentClassifier>(sp => 
     new MlNetContentClassifier("models", sp));
+builder.Services.AddSingleton<IImageClassifier>(sp =>
+{
+    var env = sp.GetRequiredService<IWebHostEnvironment>();
+    var logger = sp.GetRequiredService<ILogger<ImageNetClassifier>>();
+    var programLogger = sp.GetRequiredService<ILogger<Program>>();
+    
+    // ContentRootPath in ASP.NET Core points to bin/Debug/net8.0/ during runtime
+    // We need to go up to the project root where .csproj is located
+    // Project root: src/AiAgents.ContentModerationAgent.Web/
+    // Models should be in: src/AiAgents.ContentModerationAgent.Web/models/
+    
+    var contentRoot = env.ContentRootPath;
+    programLogger.LogInformation("========== INITIALIZING IMAGE CLASSIFIER ==========");
+    programLogger.LogInformation($"[Program] ContentRootPath (runtime): {contentRoot}");
+    
+    // If ContentRootPath contains "bin", go up to project root
+    string projectRoot;
+    if (contentRoot.Contains("bin"))
+    {
+        var binIndex = contentRoot.IndexOf("bin", StringComparison.OrdinalIgnoreCase);
+        projectRoot = contentRoot.Substring(0, binIndex).TrimEnd('\\', '/');
+    }
+    else
+    {
+        // Already at project root
+        projectRoot = contentRoot;
+    }
+    
+    var modelsDir = Path.Combine(projectRoot, "models");
+    var fullModelsPath = Path.GetFullPath(modelsDir);
+    
+    // Also check the known location
+    var knownModelPath = @"C:\Users\HOME\Desktop\AI Agent\src\AiAgents.ContentModerationAgent.Web\models\resnet50-v2-7.onnx";
+    
+    programLogger.LogInformation($"[Program] Project root: {projectRoot}");
+    programLogger.LogInformation($"[Program] Models directory: {fullModelsPath}");
+    programLogger.LogInformation($"[Program] Models directory exists: {Directory.Exists(fullModelsPath)}");
+    programLogger.LogInformation($"[Program] Known model path: {knownModelPath}");
+    programLogger.LogInformation($"[Program] Known model exists: {System.IO.File.Exists(knownModelPath)}");
+    
+    if (Directory.Exists(fullModelsPath))
+    {
+        var modelFile = Path.Combine(fullModelsPath, "resnet50-v2-7.onnx");
+        var modelExists = System.IO.File.Exists(modelFile);
+        programLogger.LogInformation($"[Program] Model file path: {modelFile}");
+        programLogger.LogInformation($"[Program] Model file exists: {modelExists}");
+        if (modelExists)
+        {
+            var fileInfo = new System.IO.FileInfo(modelFile);
+            programLogger.LogInformation($"[Program] Model file size: {fileInfo.Length / (1024.0 * 1024.0):F2} MB");
+        }
+    }
+    
+    // Use known path if it exists, otherwise use calculated path
+    var finalModelsPath = System.IO.File.Exists(knownModelPath) 
+        ? Path.GetDirectoryName(knownModelPath)! 
+        : fullModelsPath;
+    
+    programLogger.LogInformation($"[Program] Final models path: {finalModelsPath}");
+    programLogger.LogInformation("========== IMAGE CLASSIFIER INITIALIZED ==========");
+    
+    return new ImageNetClassifier(finalModelsPath, logger);
+});
 
 // Runners
 builder.Services.AddScoped<ModerationAgentRunner>();

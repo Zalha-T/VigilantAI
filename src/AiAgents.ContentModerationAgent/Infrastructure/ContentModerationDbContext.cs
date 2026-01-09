@@ -18,6 +18,7 @@ public class ContentModerationDbContext : DbContext
     public DbSet<SystemSettings> SystemSettings { get; set; }
     public DbSet<Context> Contexts { get; set; }
     public DbSet<BlockedWord> BlockedWords { get; set; }
+    public DbSet<ContentImage> ContentImages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -92,6 +93,25 @@ public class ContentModerationDbContext : DbContext
             entity.HasIndex(e => e.Word);
             entity.HasIndex(e => e.Category);
             entity.HasIndex(e => e.IsActive);
+        });
+
+        // ContentImage configuration
+        modelBuilder.Entity<ContentImage>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.FileName).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.OriginalFileName).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.FilePath).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.MimeType).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.ClassificationResult).HasMaxLength(1000);
+            entity.HasIndex(e => e.ContentId);
+            entity.HasIndex(e => e.CreatedAt);
+            
+            // Relationship with Content (one-to-one)
+            entity.HasOne(e => e.Content)
+                .WithOne(c => c.Image)
+                .HasForeignKey<ContentImage>(e => e.ContentId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
