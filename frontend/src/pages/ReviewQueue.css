@@ -47,14 +47,40 @@
 }
 
 .review-card {
-  background-color: #2d2d2d;
+  background: linear-gradient(180deg, #2d2d2d 0%, #252525 100%);
   border: 1px solid #404040;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 1.5rem;
   display: flex;
   justify-content: space-between;
   gap: 2rem;
-  transition: opacity 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  animation: fadeInUp 0.4s ease-out backwards;
+}
+
+.review-card:nth-child(1) { animation-delay: 0.05s; }
+.review-card:nth-child(2) { animation-delay: 0.1s; }
+.review-card:nth-child(3) { animation-delay: 0.15s; }
+.review-card:nth-child(4) { animation-delay: 0.2s; }
+.review-card:nth-child(5) { animation-delay: 0.25s; }
+.review-card:nth-child(n+6) { animation-delay: 0.3s; }
+
+.review-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+  border-color: #4a9eff;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .review-card.processing {
@@ -179,17 +205,38 @@
 
 .action-btn {
   padding: 0.75rem 1rem;
-  border-radius: 4px;
+  border-radius: 8px;
   border: none;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s, transform 0.1s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.action-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
 }
 
 .action-btn:hover:not(:disabled) {
-  opacity: 0.9;
-  transform: scale(1.05);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.action-btn:active:not(:disabled)::before {
+  width: 300px;
+  height: 300px;
 }
 
 .action-btn:disabled {
@@ -198,16 +245,16 @@
 }
 
 .action-allow {
-  background-color: #4caf50;
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
   color: white;
 }
 
 .action-review {
-  background-color: #ff9800;
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
   color: white;
 }
 
 .action-block {
-  background-color: #f44336;
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
   color: white;
 }

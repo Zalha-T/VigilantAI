@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { contentApi, Content } from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
+import { showToast } from '../components/ToastContainer'
 import './ContentDetails.css'
 
 const ContentDetails = () => {
@@ -70,10 +71,11 @@ const ContentDetails = () => {
     setDeleting(true)
     try {
       await contentApi.delete(id)
+      showToast('Content deleted successfully', 'success')
       navigate('/')
     } catch (error) {
       console.error('Error deleting content:', error)
-      alert('Error deleting content. Please try again.')
+      showToast('Error deleting content. Please try again.', 'error')
       setDeleting(false)
     }
   }
@@ -90,10 +92,10 @@ const ContentDetails = () => {
       await contentApi.sendToReview(id)
       // Reload content to show updated status
       await loadContent()
-      alert('Content sent to Review Queue successfully!')
+      showToast('Content sent to Review Queue successfully!', 'success')
     } catch (error) {
       console.error('Error sending to review:', error)
-      alert('Error sending content to review. Please try again.')
+      showToast('Error sending content to review. Please try again.', 'error')
     } finally {
       setSendingToReview(false)
     }

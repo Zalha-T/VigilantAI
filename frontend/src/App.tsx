@@ -5,6 +5,7 @@ import ContentDetails from './pages/ContentDetails'
 import CreateContent from './pages/CreateContent'
 import Settings from './pages/Settings'
 import WordlistSettings from './pages/WordlistSettings'
+import ToastContainer from './components/ToastContainer'
 import './App.css'
 
 function App() {
@@ -37,6 +38,7 @@ function App() {
             <Route path="/content/:id" element={<ContentDetails />} />
           </Routes>
         </main>
+        <ToastContainer />
       </div>
     </BrowserRouter>
   )

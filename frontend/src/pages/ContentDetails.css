@@ -5,15 +5,22 @@
 }
 
 .back-link {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   margin-bottom: 1rem;
   color: #4a9eff;
   text-decoration: none;
   font-size: 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
 }
 
 .back-link:hover {
-  text-decoration: underline;
+  background: linear-gradient(180deg, #2d2d2d 0%, #252525 100%);
+  transform: translateX(-4px);
+  color: #6bb6ff;
 }
 
 .details-header {
@@ -42,18 +49,41 @@
 
 .review-btn {
   padding: 0.75rem 1.5rem;
-  border-radius: 4px;
+  border-radius: 8px;
   border: none;
-  background-color: #ff9800;
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
   color: white;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.review-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
 }
 
 .review-btn:hover:not(:disabled) {
-  background-color: #f57c00;
+  background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+}
+
+.review-btn:active:not(:disabled)::before {
+  width: 300px;
+  height: 300px;
 }
 
 .review-btn:disabled {
@@ -63,18 +93,41 @@
 
 .delete-btn {
   padding: 0.75rem 1.5rem;
-  border-radius: 4px;
+  border-radius: 8px;
   border: none;
-  background-color: #f44336;
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
   color: white;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.delete-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
 }
 
 .delete-btn:hover:not(:disabled) {
-  background-color: #d32f2f;
+  background: linear-gradient(135deg, #e53935 0%, #c62828 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+}
+
+.delete-btn:active:not(:disabled)::before {
+  width: 300px;
+  height: 300px;
 }
 
 .delete-btn:disabled {
@@ -83,10 +136,23 @@
 }
 
 .details-card {
-  background-color: #2d2d2d;
+  background: linear-gradient(180deg, #2d2d2d 0%, #252525 100%);
   border: 1px solid #404040;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 2rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  animation: fadeInUp 0.4s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .details-section {
@@ -159,16 +225,24 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  background-color: #1a1a1a;
-  border-radius: 6px;
+  background: linear-gradient(90deg, #1a1a1a 0%, #222 100%);
+  border-radius: 8px;
   color: #e0e0e0;
   font-size: 1.05rem;
   border-left: 3px solid #4a9eff;
-  transition: background-color 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: fadeInUp 0.4s ease-out backwards;
 }
 
+.score-item:nth-child(1) { animation-delay: 0.05s; }
+.score-item:nth-child(2) { animation-delay: 0.1s; }
+.score-item:nth-child(3) { animation-delay: 0.15s; }
+.score-item:nth-child(4) { animation-delay: 0.2s; }
+
 .score-item:hover {
-  background-color: #222;
+  background: linear-gradient(90deg, #222 0%, #2a2a2a 100%);
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(74, 158, 255, 0.2);
 }
 
 .score-item span:first-child {
@@ -207,23 +281,42 @@
 }
 
 .label-spam {
-  background-color: #ff9800;
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
   color: white;
+  box-shadow: 0 2px 4px rgba(255, 152, 0, 0.3);
+  animation: labelAppear 0.3s ease-out backwards;
 }
 
 .label-toxic {
-  background-color: #f44336;
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
   color: white;
+  box-shadow: 0 2px 4px rgba(244, 67, 54, 0.3);
+  animation: labelAppear 0.3s ease-out backwards;
 }
 
 .label-hate {
-  background-color: #9c27b0;
+  background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
   color: white;
+  box-shadow: 0 2px 4px rgba(156, 39, 176, 0.3);
+  animation: labelAppear 0.3s ease-out backwards;
 }
 
 .label-offensive {
-  background-color: #ff5722;
+  background: linear-gradient(135deg, #ff5722 0%, #e64a19 100%);
   color: white;
+  box-shadow: 0 2px 4px rgba(255, 87, 34, 0.3);
+  animation: labelAppear 0.3s ease-out backwards;
+}
+
+@keyframes labelAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .no-labels {
@@ -263,28 +356,60 @@
 }
 
 .status-queued {
-  background-color: #666;
+  background: linear-gradient(135deg, #666 0%, #555 100%);
   color: white;
+  box-shadow: 0 2px 4px rgba(102, 102, 102, 0.2);
+  animation: statusAppear 0.3s ease-out;
 }
 
 .status-processing {
-  background-color: #ffa500;
+  background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%);
   color: white;
+  box-shadow: 0 2px 8px rgba(255, 165, 0, 0.3);
+  animation: pulse 2s ease-in-out infinite, statusAppear 0.3s ease-out;
 }
 
 .status-approved {
-  background-color: #4caf50;
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
   color: white;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+  animation: statusAppear 0.3s ease-out;
 }
 
 .status-pending {
-  background-color: #ff9800;
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
   color: white;
+  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+  animation: statusAppear 0.3s ease-out;
 }
 
 .status-blocked {
-  background-color: #f44336;
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
   color: white;
+  box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+  animation: statusAppear 0.3s ease-out;
+}
+
+@keyframes statusAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.05);
+  }
 }
 
 .image-section {

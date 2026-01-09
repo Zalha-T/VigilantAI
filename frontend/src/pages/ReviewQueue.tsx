@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { contentApi, PendingReviewContent } from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
+import { showToast } from '../components/ToastContainer'
 import './ReviewQueue.css'
 
 const ReviewQueue = () => {
@@ -68,11 +69,15 @@ const ReviewQueue = () => {
       // Remove from list immediately (optimistic update)
       setContents(prev => prev.filter(c => c.id !== contentId))
       
+      const decisionLabel = goldLabel === 1 ? 'Allow' : goldLabel === 2 ? 'Review' : 'Block'
+      showToast(`Review submitted: ${decisionLabel}`, 'success')
+      
       // Refresh list to get updated data
       await loadPendingReview(true)
     } catch (error) {
       console.error('Error submitting review:', error)
-      alert(`Error submitting review: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+      showToast(`Error submitting review: ${errorMsg}`, 'error')
       // Reload on error to restore state
       await loadPendingReview(true)
     } finally {

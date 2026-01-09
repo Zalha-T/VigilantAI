@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { contentApi } from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
+import { showToast } from '../components/ToastContainer'
 import './CreateContent.css'
 
 const CreateContent = () => {
@@ -54,6 +55,7 @@ const CreateContent = () => {
       })
 
       setSuccess(true)
+      showToast('Content created successfully!', 'success')
       
       // Reset form
       setFormData({
@@ -191,7 +193,9 @@ const CreateContent = () => {
               const file = e.target.files?.[0] || null
               // Validate content type before setting image
               if (file && formData.type !== 2) {
-                setError('Images can only be uploaded for Post content type. Please select Post as content type first.')
+                const errorMsg = 'Images can only be uploaded for Post content type. Please select Post as content type first.'
+                setError(errorMsg)
+                showToast(errorMsg, 'warning')
                 e.target.value = '' // Clear the file input
                 return
               }

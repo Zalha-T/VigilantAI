@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { settingsApi, SystemSettings } from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
+import { showToast } from '../components/ToastContainer'
 import './Settings.css'
 
 const Settings = () => {
@@ -55,11 +56,14 @@ const Settings = () => {
 
       await settingsApi.updateThresholds(thresholds)
       setSuccess('Thresholds updated successfully!')
+      showToast('Thresholds updated successfully!', 'success')
       
       // Reload settings to get updated values
       await loadSettings()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error updating thresholds')
+      const errorMsg = err instanceof Error ? err.message : 'Error updating thresholds'
+      setError(errorMsg)
+      showToast(errorMsg, 'error')
     } finally {
       setSaving(false)
     }
@@ -73,11 +77,14 @@ const Settings = () => {
 
       await settingsApi.updateRetrainThreshold({ retrainThreshold })
       setSuccess('Retrain threshold updated successfully!')
+      showToast('Retrain threshold updated successfully!', 'success')
       
       // Reload settings to get updated values
       await loadSettings()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error updating retrain threshold')
+      const errorMsg = err instanceof Error ? err.message : 'Error updating retrain threshold'
+      setError(errorMsg)
+      showToast(errorMsg, 'error')
     } finally {
       setSaving(false)
     }

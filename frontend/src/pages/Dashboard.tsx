@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { contentApi, Content } from '../services/api'
 import { onModerationResult } from '../services/signalr'
 import LoadingSpinner from '../components/LoadingSpinner'
+import SkeletonCard from '../components/SkeletonCard'
 import './Dashboard.css'
 
 const Dashboard = () => {
@@ -94,9 +95,10 @@ const Dashboard = () => {
       await contentApi.delete(contentId)
       // Remove from list immediately
       setContents(prev => prev.filter(c => c.id !== contentId))
+      showToast('Content deleted successfully', 'success')
     } catch (error) {
       console.error('Error deleting content:', error)
-      alert('Error deleting content. Please try again.')
+      showToast('Error deleting content. Please try again.', 'error')
     }
   }
 
@@ -148,7 +150,13 @@ const Dashboard = () => {
       </div>
 
       {loading ? (
-        <LoadingSpinner />
+        <>
+          <div className="content-grid">
+            {[...Array(6)].map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        </>
       ) : (
         <>
           <div className="content-grid">

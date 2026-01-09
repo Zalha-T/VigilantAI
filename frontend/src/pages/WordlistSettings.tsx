@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { wordlistApi, BlockedWord } from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
+import { showToast } from '../components/ToastContainer'
 import './Settings.css'
 
 const WordlistSettings = () => {
@@ -45,7 +46,9 @@ const WordlistSettings = () => {
   const handleAddWord = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newWord.trim()) {
-      setError('Word cannot be empty')
+      const errorMsg = 'Word cannot be empty'
+      setError(errorMsg)
+      showToast(errorMsg, 'warning')
       return
     }
 
@@ -53,11 +56,15 @@ const WordlistSettings = () => {
       setError(null)
       setSuccess(null)
       await wordlistApi.add({ word: newWord.trim(), category: newCategory })
-      setSuccess(`Word "${newWord}" added successfully!`)
+      const successMsg = `Word "${newWord}" added successfully!`
+      setSuccess(successMsg)
+      showToast(successMsg, 'success')
       setNewWord('')
       await loadWords()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error adding word')
+      const errorMsg = err instanceof Error ? err.message : 'Error adding word'
+      setError(errorMsg)
+      showToast(errorMsg, 'error')
     }
   }
 
@@ -71,9 +78,12 @@ const WordlistSettings = () => {
       setSuccess(null)
       await wordlistApi.delete(id)
       setSuccess('Word deleted successfully!')
+      showToast('Word deleted successfully!', 'success')
       await loadWords()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error deleting word')
+      const errorMsg = err instanceof Error ? err.message : 'Error deleting word'
+      setError(errorMsg)
+      showToast(errorMsg, 'error')
     }
   }
 
@@ -82,10 +92,14 @@ const WordlistSettings = () => {
       setError(null)
       setSuccess(null)
       await wordlistApi.update(word.id, { isActive: !word.isActive })
-      setSuccess(`Word ${word.isActive ? 'deactivated' : 'activated'} successfully!`)
+      const successMsg = `Word ${word.isActive ? 'deactivated' : 'activated'} successfully!`
+      setSuccess(successMsg)
+      showToast(successMsg, 'success')
       await loadWords()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error updating word')
+      const errorMsg = err instanceof Error ? err.message : 'Error updating word'
+      setError(errorMsg)
+      showToast(errorMsg, 'error')
     }
   }
 
@@ -107,10 +121,13 @@ const WordlistSettings = () => {
       setSuccess(null)
       await wordlistApi.update(id, { word: editWord.trim(), category: editCategory })
       setSuccess('Word updated successfully!')
+      showToast('Word updated successfully!', 'success')
       setEditingId(null)
       await loadWords()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error updating word')
+      const errorMsg = err instanceof Error ? err.message : 'Error updating word'
+      setError(errorMsg)
+      showToast(errorMsg, 'error')
     }
   }
 
