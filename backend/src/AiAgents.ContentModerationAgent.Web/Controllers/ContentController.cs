@@ -264,6 +264,12 @@ public class ContentController : ControllerBase
         var contentImage = await _context.ContentImages
             .FirstOrDefaultAsync(img => img.ContentId == id);
 
+        // Get latest prediction
+        var latestPrediction = content.Predictions.OrderByDescending(p => p.CreatedAt).FirstOrDefault();
+        
+        // Get latest review
+        var latestReview = content.Reviews.OrderByDescending(r => r.CreatedAt).FirstOrDefault();
+
         var result = new
         {
             content.Id,
@@ -279,6 +285,18 @@ public class ContentController : ControllerBase
                 content.Author.AccountAgeDays,
                 content.Author.PreviousViolations
             },
+            // Return latest prediction as single object (not array) to match frontend interface
+            Prediction = latestPrediction != null ? new
+            {
+                latestPrediction.Decision,
+                latestPrediction.FinalScore,
+                latestPrediction.SpamScore,
+                latestPrediction.ToxicScore,
+                latestPrediction.HateScore,
+                latestPrediction.OffensiveScore,
+                latestPrediction.Confidence
+            } : null,
+            // Also return as array for backwards compatibility if needed
             Predictions = content.Predictions.Select(p => new
             {
                 p.Id,
@@ -292,6 +310,14 @@ public class ContentController : ControllerBase
                 p.ContextFactors,
                 p.CreatedAt
             }),
+            // Return latest review as single object to match frontend interface
+            Review = latestReview != null ? new
+            {
+                latestReview.GoldLabel,
+                latestReview.CorrectDecision,
+                latestReview.Feedback
+            } : null,
+            // Also return as array for backwards compatibility
             Reviews = content.Reviews.Select(r => new
             {
                 r.Id,
@@ -319,7 +345,18 @@ public class ContentController : ControllerBase
                 Classification = !string.IsNullOrEmpty(contentImage.ClassificationResult) 
                     ? JsonSerializer.Deserialize<object>(contentImage.ClassificationResult) 
                     : null
-            } : null
+            } : null,
+            // Add Labels object to match frontend interface
+            Labels = new
+            {
+                IsSpam = latestPrediction != null && latestPrediction.SpamScore > 0.5,
+                IsToxic = latestPrediction != null && latestPrediction.ToxicScore > 0.5,
+                IsHate = latestPrediction != null && latestPrediction.HateScore > 0.5,
+                IsOffensive = latestPrediction != null && latestPrediction.OffensiveScore > 0.5,
+                IsProblematic = latestPrediction != null && latestPrediction.FinalScore > 0.5,
+                AgentDecision = latestPrediction != null ? (ModerationDecision?)latestPrediction.Decision : null,
+                HumanLabel = latestReview != null ? (ModerationDecision?)latestReview.GoldLabel : null
+            }
         };
 
         return Ok(result);
