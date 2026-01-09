@@ -116,10 +116,7 @@ For comprehensive documentation, see [DOCUMENTATION.md](./DOCUMENTATION.md)
 
 ### API Testing
 
-Use Swagger UI at `/swagger` or the provided PowerShell script:
-```powershell
-.\test-api.ps1
-```
+Use Swagger UI at `/swagger` to test all API endpoints interactively.
 
 ### Manual Testing
 
