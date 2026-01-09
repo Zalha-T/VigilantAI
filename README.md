@@ -1,163 +1,194 @@
-# Content Moderation Agent
+# VigilantAI - Content Moderation Agent
 
-AI Agent za automatsku moderaciju sadržaja (komentari, postovi, poruke) sa kontekstualnom inteligencijom i kontinuiranim učenjem iz feedbacka.
+AI-powered content moderation system that automatically analyzes and classifies user-generated content (comments, posts, messages) using a combination of rule-based wordlist filtering and machine learning models that learn from moderator feedback.
 
-## Arhitektura
+## 🎯 What Makes This an Agent?
 
-Projekt koristi **Clean Architecture** sa sljedećim slojevima:
+VigilantAI is a **multi-agent system** that operates autonomously through continuous cycles:
 
-- **AiAgents.Core**: Framework abstrakcije (SoftwareAgent, IPerceptionSource, IPolicy, IActuator, ILearningComponent)
-- **AiAgents.ContentModerationAgent**: Shared logika agenta
-  - **Domain**: Entiteti i enum-i
-  - **Application**: Servisi i Agent Runneri (Sense→Think→Act→Learn)
-  - **Infrastructure**: DbContext, storage
-  - **ML**: ML.NET klasifikacija
-- **AiAgents.ContentModerationAgent.Web**: Web host/transport (Controllers, SignalR, Background Services)
+- **Moderation Agent** (Classification + Context-Aware): Perceives content, thinks using ML models and rules, acts by updating status, learns indirectly through feedback
+- **Retraining Agent** (Learning): Monitors feedback, triggers model retraining, manages model versions
+- **Threshold Update Agent** (Goal-Oriented): Optimizes decision thresholds based on performance metrics
 
-## Agent Runneri
+Each agent follows the **Sense → Think → Act → Learn** cycle, making this a true software agent system, not just a classification tool.
 
-### 1. ModerationAgentRunner (Sense → Think → Act)
-- **Sense**: Uzima sljedeći komentar iz queue-a
-- **Think**: Klasificira koristeći ML model + kontekstualne faktore
-- **Act**: Postavlja status (Allow/Review/Block) i upisuje prediction
+## ✨ Features
 
-### 2. RetrainAgentRunner (Sense → Think → Act → Learn)
-- **Sense**: Provjerava broj novih gold labels
-- **Think**: Odlučuje da li treba retrain
-- **Act**: Trenira novi model
-- **Learn**: Resetuje counter, ažurira settings
+- 🤖 **Autonomous Moderation**: Real-time content analysis and classification
+- 📚 **Wordlist Filtering**: Instant blocking of explicit words/phrases
+- 🧠 **ML Model Learning**: Adapts and improves from moderator feedback
+- 🖼️ **Image Classification**: Analyzes images using ResNet50 ONNX model
+- 📊 **Context-Aware Decisions**: Considers author reputation, thread context, engagement
+- 🔄 **Continuous Learning**: Automatic model retraining when sufficient feedback is available
+- 📱 **Modern Web UI**: React frontend with real-time updates via SignalR
+- ⚙️ **Configurable Thresholds**: Adjustable decision boundaries
+- 🎨 **Beautiful UI**: Gradient buttons, smooth animations, toast notifications
 
-### 3. ThresholdUpdateRunner (Sense → Think → Act → Learn)
-- **Sense**: Čita feedback metrike (FPR, FNR)
-- **Think**: Odlučuje da li treba ažurirati pragove
-- **Act**: Ažurira pragove
-- **Learn**: Logira promjene
+## 🏗️ Architecture
 
-## Zahtjevi
+### Clean Architecture Layers
+
+```
+AiAgents.Core/                    # Framework abstractions
+AiAgents.ContentModerationAgent/  # Shared agent logic
+  ├── Domain/                     # Entities and business rules
+  ├── Application/                # Use cases and agent runners
+  ├── Infrastructure/             # Data access
+  └── ML/                         # Machine learning components
+AiAgents.ContentModerationAgent.Web/  # Host/Transport layer
+```
+
+### Agent Runners
+
+- **ModerationAgentRunner**: Processes queued content (Sense → Think → Act)
+- **RetrainAgentRunner**: Monitors and triggers retraining (Sense → Think → Act → Learn)
+- **ThresholdUpdateAgentRunner**: Optimizes thresholds (Sense → Think → Act → Learn)
+
+## 🚀 Quick Start
+
+### Prerequisites
 
 - .NET 8.0 SDK
-- SQL Server (LocalDB ili SQL Server Express)
-- Visual Studio 2022 ili VS Code
+- SQL Server (LocalDB, Express, or full)
+- Node.js 18+ and npm
 
-## Pokretanje
+### Backend Setup
 
-1. **Restore paketa**:
-   ```bash
-   dotnet restore
-   ```
+```bash
+cd backend
+dotnet restore
+dotnet build backend/AiAgents.sln
+cd src/AiAgents.ContentModerationAgent.Web
+dotnet run
+```
 
-2. **Build projekta**:
-   ```bash
-   dotnet build
-   ```
+API available at `https://localhost:60830`  
+Swagger UI: `https://localhost:60830/swagger`
 
-3. **Pokreni aplikaciju**:
-   ```bash
-   cd src/AiAgents.ContentModerationAgent.Web
-   dotnet run
-   ```
+### Frontend Setup
 
-4. **Otvori Swagger UI**:
-   - Navigiraj na `https://localhost:5001/swagger` (ili port koji je dodijeljen)
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-## Brzo testiranje
+Frontend available at `http://localhost:3000`
 
-### Opcija 1: Swagger UI (preporučeno)
-1. Pokreni aplikaciju
-2. Otvori `https://localhost:5001/swagger` u browseru
-3. Koristi Swagger UI za testiranje API endpoints
+### Database
 
-### Opcija 2: PowerShell script
+Database is automatically created on first run. Update connection string in `appsettings.json` if needed.
+
+### ONNX Model
+
+Download `resnet50-v2-7.onnx` from [ONNX Model Zoo](https://github.com/onnx/models) and place in:
+```
+backend/src/AiAgents.ContentModerationAgent.Web/models/resnet50-v2-7.onnx
+```
+
+## 📖 Documentation
+
+For comprehensive documentation, see [DOCUMENTATION.md](./DOCUMENTATION.md)
+
+## 🎮 Usage
+
+1. **Create Content**: Add new content through the web UI
+2. **Review Queue**: Moderate content that needs human review
+3. **Settings**: Configure thresholds and retraining parameters
+4. **Wordlist**: Manage blocked words and phrases
+5. **Dashboard**: View all content with real-time updates
+
+## 🔧 Configuration
+
+### Moderation Thresholds
+
+- **Allow Threshold** (default: 0.3): Content below this is approved
+- **Review Threshold** (default: 0.5): Content between Allow and Review goes to queue
+- **Block Threshold** (default: 0.7): Content above this is blocked
+
+### Retraining
+
+- **Retrain Threshold** (default: 6): Number of new gold labels needed
+- Automatically triggers when threshold is reached
+- Requires minimum 10 gold labels in database
+
+## 🧪 Testing
+
+### API Testing
+
+Use Swagger UI at `/swagger` or the provided PowerShell script:
 ```powershell
 .\test-api.ps1
 ```
 
-### Opcija 3: Ručno kroz API
-Pogledaj detaljne upute u `TESTING_GUIDE.md`
+### Manual Testing
 
-## API Endpoints
+1. Create content through UI
+2. Check dashboard for processed content
+3. Submit reviews to generate gold labels
+4. Monitor retraining in settings page
 
-### Content
-- `POST /api/content` - Kreira novi sadržaj (komentar/post/poruku)
-- `GET /api/content/pending-review` - Vraća sve komentare koji čekaju review
-
-### Review
-- `POST /api/review/{contentId}/review` - Moderator daje feedback (gold label)
-
-## SignalR Hub
-
-- **Hub**: `/moderationHub`
-- **Event**: `ModerationResult` - Emituje se kada agent procesira komentar
-
-## Feedback Loop
-
-Agent uči iz:
-1. **Moderator feedback**: Gold labels iz review queue-a
-2. **Korisnički reportovi**: Reportovani komentari (false negatives)
-3. **Appeal proces**: Uspješni appealovi (false positives)
-4. **Engagement metrike**: Blokirani komentari sa visokim engagementom
-
-## Konfiguracija
-
-Pragovi i postavke se mogu konfigurirati kroz `SystemSettings` tabelu:
-- `AllowThreshold`: Prag za Allow (default: 0.3)
-- `ReviewThreshold`: Prag za Review (default: 0.5)
-- `BlockThreshold`: Prag za Block (default: 0.7)
-- `RetrainThreshold`: Broj novih gold labels potrebnih za retraining (default: 100)
-
-## Database
-
-Aplikacija automatski kreira bazu pri prvom pokretanju (EnsureCreated).
-
-Za migracije (kada budu potrebne):
-```bash
-dotnet ef migrations add InitialCreate --project src/AiAgents.ContentModerationAgent --startup-project src/AiAgents.ContentModerationAgent.Web
-dotnet ef database update --project src/AiAgents.ContentModerationAgent --startup-project src/AiAgents.ContentModerationAgent.Web
-```
-
-## Struktura Projekta
+## 📁 Project Structure
 
 ```
-AiAgents/
-├── src/
-│   ├── AiAgents.Core/
-│   │   ├── SoftwareAgent.cs
-│   │   ├── IPerceptionSource.cs
-│   │   ├── IPolicy.cs
-│   │   ├── IActuator.cs
-│   │   └── ILearningComponent.cs
-│   ├── AiAgents.ContentModerationAgent/
-│   │   ├── Domain/
-│   │   │   ├── Entities/
-│   │   │   └── Enums/
-│   │   ├── Application/
-│   │   │   ├── Services/
-│   │   │   ├── Runners/
-│   │   │   └── DTOs/
-│   │   ├── Infrastructure/
-│   │   │   └── ContentModerationDbContext.cs
-│   │   └── ML/
-│   │       ├── IContentClassifier.cs
-│   │       └── MlNetContentClassifier.cs
-│   └── AiAgents.ContentModerationAgent.Web/
-│       ├── Controllers/
-│       ├── Hubs/
-│       ├── BackgroundServices/
-│       └── Program.cs
-└── AiAgents.sln
+VigilantAI/
+├── backend/
+│   └── src/
+│       ├── AiAgents.Core/              # Framework
+│       ├── AiAgents.ContentModerationAgent/  # Agent logic
+│       └── AiAgents.ContentModerationAgent.Web/  # Web host
+├── frontend/                           # React frontend
+├── DOCUMENTATION.md                    # Full documentation
+├── API_USAGE_GUIDE.md                  # API reference
+├── TESTING_GUIDE.md                    # Testing guide
+└── TROUBLESHOOTING.md                  # Troubleshooting
 ```
 
-## Napomene
+## 🔑 Key Concepts
 
-- ML model je pojednostavljen za demonstraciju. U produkciji bi koristio naprednije feature engineering i multi-label klasifikaciju.
-- Context calculation je također pojednostavljen. U produkciji bi koristio sentiment analysis i naprednije metrike.
-- Background services rade kontinuirano i automatski procesiraju komentare.
+### Wordlist vs ML Model
 
-## Razvoj
+- **Wordlist**: Rule-based, instant blocking of explicit words
+- **ML Model**: Learns patterns, adapts to new content types
+- **Combined**: Wordlist for explicit blocking, ML for contextual understanding
 
-Za dalji razvoj:
-1. Poboljšati ML model (feature engineering, multi-label classification)
-2. Implementirati napredniji context calculation (sentiment analysis)
-3. Dodati UI za moderatore (review queue dashboard)
-4. Implementirati aktivno učenje
-5. Dodati detaljnije metrike i monitoring
+### Scoring Formula
+
+```
+Final Score = (Spam×0.3 + Toxic×0.3 + Hate×0.25 + Offensive×0.15) × ContextMultiplier
+```
+
+### Decision Logic
+
+- Final Score < Allow Threshold → **Allow**
+- Final Score > Block Threshold → **Block**
+- Otherwise → **Review** (human moderation)
+
+## 🛠️ Technology Stack
+
+**Backend:**
+- .NET 8.0
+- Entity Framework Core
+- ML.NET
+- ONNX Runtime
+- SignalR
+
+**Frontend:**
+- React 18
+- TypeScript
+- Vite
+- Axios
+- SignalR Client
+
+## 📝 License
+
+This project is developed for educational purposes as part of the AI course.
+
+## 🤝 Contributing
+
+This is an academic project. For questions or issues, refer to the documentation or contact the course instructor.
+
+---
+
+**Version:** 1.0  
+**Last Updated:** January 2026
