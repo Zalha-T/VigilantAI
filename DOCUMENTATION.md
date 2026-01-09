@@ -886,11 +886,12 @@ finalScore = 0.0875 × 0.5 = 0.04375
 **Decision:**
 - Final Score: 0.04375
 - Allow Threshold: 0.3
-- Review Threshold: 0.5
+- Review Treshold: 0.5
+- Block Threshold: 0.7
 - **Decision: Allow** (0.04375 < 0.3)
 - Status: Approved
 
-**Note:** This is a borderline case. If the score were between 0.3 and 0.7, it would go to Review Queue for human moderation.
+**Note:** This is a borderline case. If the score were between 0.3 and 0.7, it would go to Review Queue for human moderation. (Review Threshold of 0.5 is informational only and not used in the decision logic.)
 
 ---
 
@@ -1558,7 +1559,7 @@ Manage the wordlist used for instant content filtering.
 - **Activate/Deactivate:** Toggle word without deleting
 - **Delete:** Remove word permanently
 
-**Note:** Words are matched using word boundary detection to avoid false positives (e.g., "guys" won't match "hello guys" unless "guys" is a complete word).
+**Note:** Words are matched using word boundary detection to avoid false positives (e.g., "ass" won't match "class" because word boundaries prevent substring matches).
 
 ---
 
@@ -1630,8 +1631,8 @@ bool KeywordMatches(string keyword, string text)
     }
     
     // For single words, use word boundary matching to avoid substring matches
-    // This prevents "guys" from matching "hello guys" incorrectly
-    // But allows "guys" to match "hey guys" or "guys!" correctly
+    // This prevents "guys" from matching "guyse"
+    // But allows "guys" to match "hello guys" or "guys!" correctly
     var pattern = $@"\b{Regex.Escape(keyword)}\b";
     return Regex.IsMatch(text, pattern, RegexOptions.IgnoreCase);
 }
@@ -1640,9 +1641,9 @@ bool KeywordMatches(string keyword, string text)
 **How It Works:**
 
 1. **Single Words:** Uses word boundary matching (`\b...\b`) to match complete words only
-   - ✅ Matches: "guys" in "hey guys" or "guys!" or "guys,"
-   - ❌ Doesn't match: "guys" in "hello guys" (if "guys" is not a standalone word)
-   - Prevents false positives like "hello guys" matching "guys" when "guys" is in the wordlist
+   - ✅ Matches: "guys" in "hello guys" or "hey guys" or "guys!" (when "guys" is a complete word)
+   - ❌ Doesn't match: "guys" in "guyse" (prevents substring matches)
+   - Prevents false positives like "ass" matching "class" when "ass" is in the wordlist
 
 2. **Phrases (Multiple Words):** Uses simple `Contains()` matching
    - ✅ Matches: "you are an idiot" in "you are an idiot here"
@@ -1670,9 +1671,9 @@ Result: ✅ Matches (phrase detected using Contains())
 
 **Scenario 3: False Positive Prevention**
 ```
-Wordlist: ["guys"]
-Text: "hello guys" (where "guys" is part of a compound word)
-Result: ❌ No match (word boundary prevents substring match)
+Wordlist: ["ass"]
+Text: "This is a class assignment"
+Result: ❌ No match (word boundary prevents "ass" from matching substring in "class")
 ```
 
 **Score Calculation:**
