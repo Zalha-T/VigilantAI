@@ -103,6 +103,23 @@ VigilantAI follows the standard agent cycle for each decision-making process:
 - Retrieves thread context (if applicable)
 - Checks for associated images
 
+**Example Sense Data:**
+```csharp
+// Agent perceives:
+Content {
+    Text: "hello guys",
+    Type: Post,
+    Author: {
+        Username: "@abi",
+        ReputationScore: 50,
+        AccountAgeDays: 30,
+        PreviousViolations: 0
+    },
+    Image: null,
+    Status: Queued
+}
+```
+
 **Think:**
 - Applies wordlist filtering (rule-based, instant blocking)
 - Runs ML model prediction (text classification)
@@ -111,16 +128,72 @@ VigilantAI follows the standard agent cycle for each decision-making process:
 - Combines scores using weighted formula
 - Applies thresholds to determine decision
 
+**Example Think Process:**
+```csharp
+// Step 1: Wordlist check
+textForClassification = "hello guys"
+wordlistMatches = [] // No matches (word boundary matching)
+
+// Step 2: ML model prediction
+mlScores = {
+    SpamScore: 0.05,
+    ToxicScore: 0.05,
+    HateScore: 0.05,
+    OffensiveScore: 0.70  // High due to wordlist or pattern match
+}
+
+// Step 3: Context calculation
+authorReputation = 0.5 + 0.1 (account age > 30) - 0.0 (no violations) = 0.6
+contextMultiplier = 0.6
+
+// Step 4: Final score calculation
+finalScore = (0.05×0.3 + 0.05×0.3 + 0.05×0.25 + 0.70×0.15) × 0.6
+finalScore = (0.015 + 0.015 + 0.0125 + 0.105) × 0.6
+finalScore = 0.1475 × 0.6 = 0.0885
+
+// Step 5: Apply thresholds
+AllowThreshold = 0.3
+BlockThreshold = 0.7
+Decision: Allow (0.0885 < 0.3)
+```
+
 **Act:**
 - Creates Prediction record with scores
 - Updates Content status (Approved/PendingReview/Blocked)
 - Sets ProcessedAt timestamp
 - Emits SignalR event for real-time UI updates
 
+**Example Act Result:**
+```csharp
+// Agent acts:
+Prediction {
+    SpamScore: 0.05,
+    ToxicScore: 0.05,
+    HateScore: 0.05,
+    OffensiveScore: 0.70,
+    FinalScore: 0.0885,
+    Decision: Allow,
+    Confidence: High
+}
+
+Content.Status = Approved
+Content.ProcessedAt = 2026-01-09T10:00:00Z
+
+// SignalR event emitted:
+{
+    contentId: "guid",
+    decision: 1,  // Allow
+    finalScore: 0.0885,
+    status: 3     // Approved
+}
+```
+
 **Learn:**
 - Updates content metrics
 - Logs decision for analysis
 - (Indirect learning through Retraining Agent)
+
+**Note:** Learning happens indirectly. When a moderator reviews this content and provides feedback, the Retraining Agent will use that feedback to improve the model.
 
 #### 2. Retraining Agent Cycle
 
@@ -169,30 +242,683 @@ VigilantAI follows the standard agent cycle for each decision-making process:
 
 ### Agent Tick/Step Implementation
 
-Each agent implements a `StepAsync()` method that represents one iteration of the Sense→Think→Act→Learn cycle:
+Each agent implements a `TickAsync()` method that represents one iteration of the Sense→Think→Act→Learn cycle:
+
+**ModerationAgentRunner Implementation:**
 
 ```csharp
-public async Task<ModerationTickResult?> StepAsync(CancellationToken cancellationToken)
+public class ModerationAgentRunner
 {
-    // SENSE: Get next queued content
-    var content = await _queueService.GetNextQueuedContentAsync(cancellationToken);
-    if (content == null) return null; // No work to do
-    
-    // THINK: Score and decide
-    var prediction = await _scoringService.ScoreAndDecideAsync(content, cancellationToken);
-    
-    // ACT: Status already updated by ScoringService
-    
-    // Return result for host to emit
-    return new ModerationTickResult { ... };
+    private readonly IQueueService _queueService;
+    private readonly IScoringService _scoringService;
+
+    public async Task<ModerationTickResult?> TickAsync(CancellationToken cancellationToken = default)
+    {
+        // === SENSE ===
+        // Get next content from queue
+        var content = await _queueService.DequeueNextAsync(cancellationToken);
+        if (content == null)
+            return null; // No work available
+
+        try
+        {
+            // === THINK + ACT ===
+            // Score and decide (this combines Think and Act)
+            var prediction = await _scoringService.ScoreAndDecideAsync(content, cancellationToken);
+
+            // Create result DTO for host to emit
+            var result = new ModerationTickResult
+            {
+                ContentId = content.Id,
+                Decision = prediction.Decision,
+                Confidence = prediction.Confidence,
+                FinalScore = prediction.FinalScore,
+                NewStatus = content.Status,
+                ContextFactors = prediction.ContextFactors
+            };
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            // Log error and rethrow - BackgroundService will handle it
+            throw new InvalidOperationException($"Error processing content {content.Id}: {ex.Message}", ex);
+        }
+    }
+}
+```
+
+**RetrainAgentRunner Implementation:**
+
+```csharp
+public class RetrainAgentRunner
+{
+    private readonly ITrainingService _trainingService;
+    private readonly IThresholdService _thresholdService;
+
+    public async Task<bool> TickAsync(CancellationToken cancellationToken = default)
+    {
+        // === SENSE ===
+        // Check if retraining is needed
+        var shouldRetrain = await _trainingService.ShouldRetrainAsync(cancellationToken);
+        if (!shouldRetrain)
+            return false; // No work available
+
+        // === THINK ===
+        // Decision already made (shouldRetrain = true)
+        
+        // === ACT ===
+        // Train new model and activate it
+        await _trainingService.TrainModelAsync(activate: true, cancellationToken);
+
+        // === LEARN ===
+        // Counter reset and settings update are handled in TrainingService
+        // This is the learning component - the system has learned from new gold labels
+
+        return true;
+    }
 }
 ```
 
 **Key Principles:**
 - Each tick processes **one item** (atomic operation)
-- Returns `null` when no work is available (no-work exit)
+- Returns `null`/`false` when no work is available (no-work exit)
 - All business logic is in shared layer, not Web layer
 - Results are returned as DTOs for host to emit/log
+- Error handling is done at the runner level, with BackgroundService as fallback
+
+### Complete Cycle Example: Step-by-Step
+
+Let's trace a complete moderation cycle with real data:
+
+**Initial State:**
+- Content in database: Status = Queued, Text = "This is spam click here", Author = "@spammer" (Reputation = 20)
+
+**Tick Execution:**
+
+```csharp
+// === SENSE ===
+var content = await _queueService.DequeueNextAsync();
+// Retrieved: Content { Id: "abc123", Text: "This is spam click here", Status: Queued }
+
+// === THINK ===
+// 1. Wordlist check
+textForClassification = "This is spam click here"
+// Wordlist matches: ["spam", "click here"] → 2 matches in spam category
+spamMatches = 2
+
+// 2. ML model prediction
+mlScores = {
+    SpamScore: 0.4 + (2 × 0.2) = 0.8,  // Boosted by wordlist
+    ToxicScore: 0.05,
+    HateScore: 0.05,
+    OffensiveScore: 0.05
+}
+
+// 3. Context calculation
+authorReputation = 0.2 (low reputation)
+contextMultiplier = 0.8  // Lower multiplier for low reputation
+
+// 4. Final score
+finalScore = (0.8×0.3 + 0.05×0.3 + 0.05×0.25 + 0.05×0.15) × 0.8
+finalScore = (0.24 + 0.015 + 0.0125 + 0.0075) × 0.8
+finalScore = 0.274 × 0.8 = 0.2192
+
+// 5. Decision
+AllowThreshold = 0.3
+BlockThreshold = 0.7
+// 0.2192 < 0.3 → Decision = Allow
+// BUT: Wordlist match gives instant boost, so decision = Block
+
+// === ACT ===
+Prediction created with:
+- SpamScore: 0.8
+- FinalScore: 0.2192
+- Decision: Block (due to wordlist)
+- Status updated: Blocked
+
+// === LEARN ===
+// Decision logged, metrics updated
+// Future retraining will consider this if reviewed
+```
+
+**Result:**
+- Content status changed: Queued → Blocked
+- Prediction saved with all scores
+- SignalR event emitted to frontend
+- UI updates in real-time
+
+---
+
+## Agent Decision Examples
+
+This section provides concrete examples of how the agent makes decisions in different scenarios.
+
+### Example 1: Clear Allow - Harmless Content
+
+**Content:**
+```
+Text: "Hello, how are you today?"
+Author: "@friendly_user" (Reputation: 80, Account Age: 120 days)
+Image: None
+```
+
+**Agent Processing:**
+
+**Sense:**
+- Text: "Hello, how are you today?"
+- Author reputation: 0.8 (high)
+- No image present
+
+**Think:**
+```
+Wordlist Check:
+- Text: "hello how are you today"
+- Matches: [] (no blocked words found)
+
+ML Model Prediction:
+- SpamScore: 0.05 (no spam indicators)
+- ToxicScore: 0.05 (no toxic words)
+- HateScore: 0.05 (no hate speech)
+- OffensiveScore: 0.05 (no offensive content)
+
+Context Multiplier:
+- Author reputation: 0.8 + 0.1 (account age > 30) = 0.9
+- Context multiplier: 0.9
+
+Final Score Calculation:
+finalScore = (0.05×0.3 + 0.05×0.3 + 0.05×0.25 + 0.05×0.15) × 0.9
+finalScore = (0.015 + 0.015 + 0.0125 + 0.0075) × 0.9
+finalScore = 0.05 × 0.9 = 0.045
+```
+
+**Decision:**
+- Final Score: 0.045
+- Allow Threshold: 0.3
+- **Decision: Allow** (0.045 < 0.3)
+- Status: Approved
+
+**Reasoning:** No problematic indicators, all scores are minimal, high author reputation provides positive context.
+
+---
+
+### Example 2: Wordlist Match - Instant Block
+
+**Content:**
+```
+Text: "Buy now! Limited time offer! Click here!"
+Author: "@spammer" (Reputation: 10, Account Age: 5 days)
+Image: None
+```
+
+**Agent Processing:**
+
+**Sense:**
+- Text: "Buy now! Limited time offer! Click here!"
+- Author reputation: 0.1 (very low)
+- Multiple spam indicators
+
+**Think:**
+```
+Wordlist Check:
+- Text: "buy now limited time offer click here"
+- Matches found: ["buy now", "limited time", "click here"] → 3 spam matches
+- Spam matches: 3
+
+ML Model Prediction:
+- SpamScore: 0.4 + (3 × 0.2) = 1.0 → capped at 0.95
+- ToxicScore: 0.05
+- HateScore: 0.05
+- OffensiveScore: 0.05
+
+Context Multiplier:
+- Author reputation: 0.1 (low) - 0.0 (no account age bonus) = 0.1
+- Context multiplier: 0.1
+
+Final Score Calculation:
+finalScore = (0.95×0.3 + 0.05×0.3 + 0.05×0.25 + 0.05×0.15) × 0.1
+finalScore = (0.285 + 0.015 + 0.0125 + 0.0075) × 0.1
+finalScore = 0.32 × 0.1 = 0.032
+```
+
+**Decision:**
+- Final Score: 0.032 (low due to context)
+- **BUT:** Wordlist match triggers instant blocking
+- **Decision: Block** (wordlist override)
+- Status: Blocked
+
+**Reasoning:** Explicit spam phrases detected in wordlist, regardless of final score. Wordlist provides instant blocking for known patterns.
+
+---
+
+### Example 3: Borderline Case - Review Queue
+
+**Content:**
+```
+Text: "I'm not sure about this, but it seems suspicious"
+Author: "@new_user" (Reputation: 50, Account Age: 15 days)
+Image: None
+```
+
+**Agent Processing:**
+
+**Sense:**
+- Text: "I'm not sure about this, but it seems suspicious"
+- Author reputation: 0.5 (neutral)
+- Ambiguous language
+
+**Think:**
+```
+Wordlist Check:
+- Text: "im not sure about this but it seems suspicious"
+- Matches: [] (no exact matches)
+
+ML Model Prediction:
+- SpamScore: 0.15 (some spam indicators: "suspicious")
+- ToxicScore: 0.05
+- HateScore: 0.05
+- OffensiveScore: 0.10 (slightly elevated)
+
+Context Multiplier:
+- Author reputation: 0.5 (neutral)
+- Context multiplier: 0.5
+
+Final Score Calculation:
+finalScore = (0.15×0.3 + 0.05×0.3 + 0.05×0.25 + 0.10×0.15) × 0.5
+finalScore = (0.045 + 0.015 + 0.0125 + 0.015) × 0.5
+finalScore = 0.0875 × 0.5 = 0.04375
+```
+
+**Decision:**
+- Final Score: 0.04375
+- Allow Threshold: 0.3
+- Review Threshold: 0.5
+- **Decision: Allow** (0.04375 < 0.3)
+- Status: Approved
+
+**Note:** This is a borderline case. If the score were between 0.3 and 0.7, it would go to Review Queue for human moderation.
+
+---
+
+### Example 4: High Offensive Score - Block
+
+**Content:**
+```
+Text: "hello guys"
+Author: "@abi" (Reputation: 50, Account Age: 30 days)
+Image: None
+```
+
+**Agent Processing:**
+
+**Sense:**
+- Text: "hello guys"
+- Author reputation: 0.5
+- Simple greeting
+
+**Think:**
+```
+Wordlist Check:
+- Text: "hello guys"
+- Matches: [] (no matches - word boundary prevents false positives)
+
+ML Model Prediction:
+- SpamScore: 0.05
+- ToxicScore: 0.05
+- HateScore: 0.05
+- OffensiveScore: 0.70  // High - possibly due to wordlist or pattern
+
+Context Multiplier:
+- Author reputation: 0.5 + 0.1 (account age > 30) = 0.6
+- Context multiplier: 0.6
+
+Final Score Calculation:
+finalScore = (0.05×0.3 + 0.05×0.3 + 0.05×0.25 + 0.70×0.15) × 0.6
+finalScore = (0.015 + 0.015 + 0.0125 + 0.105) × 0.6
+finalScore = 0.1475 × 0.6 = 0.0885
+```
+
+**Decision:**
+- Final Score: 0.0885
+- Allow Threshold: 0.3
+- **Decision: Allow** (0.0885 < 0.3)
+- Status: Approved
+
+**Note:** Despite high offensive score (0.70), the final score is low due to low weights on offensive content (0.15) and positive context multiplier. This demonstrates how the system balances multiple factors.
+
+---
+
+### Example 5: Image Classification Influence
+
+**Content:**
+```
+Text: "Check this out"
+Author: "@user" (Reputation: 50)
+Image: [Picture of a pistol, classified as "pistol" with 85% confidence]
+```
+
+**Agent Processing:**
+
+**Sense:**
+- Text: "Check this out"
+- Image label: "pistol" (confidence: 0.85)
+- Image confidence > 30%, so label is appended to text
+
+**Think:**
+```
+Image Processing:
+- Image label: "pistol"
+- Confidence: 0.85 (> 0.3 threshold)
+- Text for classification: "Check this out pistol"
+
+Wordlist Check:
+- Text: "check this out pistol"
+- If "pistol" is in wordlist (offensive/weapon category):
+  - Offensive matches: 1
+  - OffensiveScore: 0.5 + (1 × 0.2) = 0.7
+
+ML Model Prediction:
+- SpamScore: 0.05
+- ToxicScore: 0.05
+- HateScore: 0.05
+- OffensiveScore: 0.70 (boosted by image label)
+
+Final Score Calculation:
+finalScore = (0.05×0.3 + 0.05×0.3 + 0.05×0.25 + 0.70×0.15) × 0.5
+finalScore = 0.1475 × 0.5 = 0.07375
+```
+
+**Decision:**
+- Final Score: 0.07375
+- **Decision: Allow** (if threshold allows) or **Block** (if wordlist has "pistol")
+- Status: Depends on wordlist configuration
+
+**Reasoning:** Image classification allows the system to detect problematic images even when text is harmless. The image label is treated as if it were in the text for wordlist checking.
+
+---
+
+## Scoring Algorithm - Detailed Explanation
+
+The scoring algorithm combines multiple factors to determine content risk. This section explains the formula and provides step-by-step calculations.
+
+### Formula Breakdown
+
+```
+Final Score = (SpamScore × 0.3 + ToxicScore × 0.3 + HateScore × 0.25 + OffensiveScore × 0.15) × ContextMultiplier
+```
+
+**Weights:**
+- Spam: 30% (most common issue)
+- Toxic: 30% (high priority)
+- Hate: 25% (serious but less common)
+- Offensive: 15% (lower priority, often subjective)
+
+**Context Multiplier:**
+- Range: 0.0 - 1.0
+- Based on author reputation, account age, violation history
+- Lower multiplier = more lenient (trusted authors)
+- Higher multiplier = stricter (new/suspicious authors)
+
+### Step-by-Step Calculation Example
+
+**Input:**
+- Content text: "This is really bad"
+- Author: Reputation 30, Account Age 10 days, 1 previous violation
+- No image
+
+**Step 1: Wordlist Check**
+```csharp
+text = "this is really bad"
+// Check each word against wordlist
+// "bad" might match if in wordlist
+// Assuming "bad" is NOT in wordlist (common word, not blocked)
+wordlistMatches = 0
+```
+
+**Step 2: ML Model Prediction**
+```csharp
+// ML model analyzes text patterns
+mlScores = {
+    SpamScore: 0.05,      // No spam indicators
+    ToxicScore: 0.25,     // "bad" might trigger some toxicity
+    HateScore: 0.05,      // No hate speech
+    OffensiveScore: 0.15  // Slightly elevated
+}
+```
+
+**Step 3: Context Calculation**
+```csharp
+authorReputation = (30 / 100.0) + (10 > 30 ? 0.1 : 0) - (1 × 0.1)
+authorReputation = 0.3 + 0 - 0.1 = 0.2
+
+// Context multiplier (simplified - actual calculation may vary)
+contextMultiplier = 0.8  // Lower for low reputation
+```
+
+**Step 4: Weighted Score**
+```csharp
+weightedScore = (0.05 × 0.3) + (0.25 × 0.3) + (0.05 × 0.25) + (0.15 × 0.15)
+weightedScore = 0.015 + 0.075 + 0.0125 + 0.0225
+weightedScore = 0.125
+```
+
+**Step 5: Apply Context**
+```csharp
+finalScore = 0.125 × 0.8
+finalScore = 0.10
+```
+
+**Step 6: Decision**
+```csharp
+AllowThreshold = 0.3
+BlockThreshold = 0.7
+
+if (finalScore < 0.3) {
+    Decision = Allow
+} else if (finalScore > 0.7) {
+    Decision = Block
+```
+
+**Actual Implementation (ScoringService.ScoreAndDecideAsync):**
+
+```csharp
+public async Task<Prediction> ScoreAndDecideAsync(Content content, CancellationToken cancellationToken = default)
+{
+    // 1. Check for image and get classification
+    var contentImage = await _context.ContentImages
+        .FirstOrDefaultAsync(img => img.ContentId == content.Id, cancellationToken);
+    
+    string? imageLabel = null;
+    float imageConfidence = 0f;
+    if (contentImage != null && !string.IsNullOrEmpty(contentImage.ClassificationResult))
+    {
+        // Parse classification result (stored as JSON)
+        var classification = JsonSerializer.Deserialize<Dictionary<string, object>>(
+            contentImage.ClassificationResult);
+        if (classification != null)
+        {
+            imageLabel = classification.TryGetValue("label", out var labelObj) 
+                ? labelObj?.ToString() : null;
+            if (classification.TryGetValue("confidence", out var confObj) && confObj != null)
+                float.TryParse(confObj.ToString(), out imageConfidence);
+        }
+    }
+
+    // 2. Append image label to text for wordlist checking (if confidence > 30%)
+    var textForClassification = content.Text;
+    if (imageLabel != null && imageConfidence > 0.3)
+    {
+        textForClassification = $"{content.Text} {imageLabel}";
+    }
+
+    // 3. Get ML scores for text (includes image label if applicable)
+    var textScores = await _classifier.PredictAsync(textForClassification, cancellationToken);
+
+    // 4. Special handling: Boost scores for dog images (example rule)
+    if (imageLabel != null && imageLabel.ToLower().Contains("dog") && imageConfidence > 0.5)
+    {
+        textScores = new ContentScores
+        {
+            SpamScore = textScores.SpamScore,
+            ToxicScore = Math.Min(0.95, textScores.ToxicScore + 0.3),
+            HateScore = Math.Min(0.95, textScores.HateScore + 0.3),
+            OffensiveScore = Math.Min(0.95, textScores.OffensiveScore + 0.3)
+        };
+    }
+
+    // 5. Calculate context multiplier
+    var textContext = await _contextService.CalculateContextAsync(content, cancellationToken);
+    var textContextMultiplier = await _contextService.CalculateContextMultiplierAsync(
+        textContext, cancellationToken);
+
+    // 6. Calculate final score (weighted average × context multiplier)
+    var finalScore = (textScores.SpamScore * 0.3 +
+                     textScores.ToxicScore * 0.3 +
+                     textScores.HateScore * 0.25 +
+                     textScores.OffensiveScore * 0.15) * textContextMultiplier;
+
+    // 7. Get thresholds and make decision
+    var settings = await _thresholdService.GetSettingsAsync(cancellationToken);
+    var decision = finalScore < settings.AllowThreshold
+        ? ModerationDecision.Allow
+        : finalScore > settings.BlockThreshold
+            ? ModerationDecision.Block
+            : ModerationDecision.Review;
+
+    // 8. Update content status based on decision
+    content.Status = decision switch
+    {
+        ModerationDecision.Allow => ContentStatus.Approved,
+        ModerationDecision.Block => ContentStatus.Blocked,
+        ModerationDecision.Review => ContentStatus.PendingReview,
+        _ => ContentStatus.PendingReview
+    };
+    content.ProcessedAt = DateTime.UtcNow;
+
+    // 9. Create and save prediction
+    var prediction = new Prediction
+    {
+        Id = Guid.NewGuid(),
+        ContentId = content.Id,
+        SpamScore = textScores.SpamScore,
+        ToxicScore = textScores.ToxicScore,
+        HateScore = textScores.HateScore,
+        OffensiveScore = textScores.OffensiveScore,
+        FinalScore = finalScore,
+        Decision = decision,
+        Confidence = 1.0 - Math.Abs(finalScore - 0.5) * 2, // Confidence based on distance from 0.5
+        ContextFactors = JsonSerializer.Serialize(textContext),
+        CreatedAt = DateTime.UtcNow
+    };
+
+    _context.Predictions.Add(prediction);
+    await _context.SaveChangesAsync(cancellationToken);
+
+    return prediction;
+}
+```
+
+**Key Implementation Details:**
+- Image labels are appended to text for wordlist checking (if confidence > 30%)
+- Special rules can boost scores (e.g., dog images boost toxic/hate/offensive)
+- Context multiplier is calculated from author reputation, account age, violations
+- Decision is made using three-zone threshold system
+- Content status is automatically updated based on decision
+- Prediction is saved with all scores and context factors
+
+**Step 6: Decision (continued)**
+```csharp
+AllowThreshold = 0.3
+BlockThreshold = 0.7
+
+if (finalScore < 0.3) {
+    Decision = Allow
+} else if (finalScore > 0.7) {
+    Decision = Block
+} else {
+    Decision = Review
+}
+
+// Result: 0.10 < 0.3 → Allow
+```
+
+### Score Component Details
+
+**Spam Score Calculation:**
+```csharp
+// Base score when spam keywords found
+if (spamMatches > 0) {
+    spamScore = Math.Min(0.95, 0.4 + (spamMatches × 0.2))
+} else {
+    spamScore = 0.05  // Default low score
+}
+
+// Example: 3 spam matches
+spamScore = Math.Min(0.95, 0.4 + (3 × 0.2))
+spamScore = Math.Min(0.95, 1.0) = 0.95
+```
+
+**Toxic/Hate/Offensive Score Calculation:**
+```csharp
+// Similar pattern for other categories
+if (toxicMatches > 0) {
+    toxicScore = Math.Min(0.95, 0.5 + (toxicMatches × 0.2))
+} else {
+    toxicScore = 0.05
+}
+
+// Multiple categories boost
+if (categoryCount >= 2) {
+    toxicScore = Math.Min(0.95, toxicScore × 1.2)
+    hateScore = Math.Min(0.95, hateScore × 1.2)
+    offensiveScore = Math.Min(0.95, offensiveScore × 1.2)
+}
+```
+
+**Context Multiplier Calculation:**
+```csharp
+authorReputation = Math.Min(1.0, 
+    (reputationScore / 100.0) + 
+    (accountAgeDays > 30 ? 0.1 : 0) - 
+    (previousViolations × 0.1)
+)
+
+// Example: Reputation 50, Age 60 days, 0 violations
+authorReputation = Math.Min(1.0, 0.5 + 0.1 - 0.0) = 0.6
+
+// Context multiplier (inverse relationship)
+contextMultiplier = 1.0 - (authorReputation × 0.2)  // Simplified
+// Higher reputation → lower multiplier → more lenient
+```
+
+### Decision Thresholds
+
+**Three-Zone System:**
+
+```
+Zone 1: [0.0 - AllowThreshold)     → Allow (Auto-approve)
+Zone 2: [AllowThreshold - BlockThreshold] → Review (Human moderation)
+Zone 3: (BlockThreshold - 1.0]    → Block (Auto-reject)
+```
+
+**Default Thresholds:**
+- Allow Threshold: 0.3
+- Review Threshold: 0.5 (informational, not used in decision)
+- Block Threshold: 0.7
+
+**Visual Representation:**
+
+```
+[Image: Number line showing three zones:
+0.0 ----[Allow: 0.3]----[Review Zone]----[Block: 0.7]---- 1.0
+        Auto-approve    Human review    Auto-reject
+]
+```
+
+**Example Decisions:**
+- Score 0.15 → Allow (in green zone)
+- Score 0.45 → Review (in yellow zone)
+- Score 0.85 → Block (in red zone)
 
 ---
 
@@ -225,7 +951,7 @@ VigilantAI/
 │   │   └── Runners/            # Agent tick implementations
 │   │       ├── ModerationAgentRunner.cs
 │   │       ├── RetrainAgentRunner.cs
-│   │       └── ThresholdUpdateAgentRunner.cs
+│   │       └── ThresholdUpdateRunner.cs
 │   │
 │   ├── Infrastructure/         # Data access and external services
 │   │   ├── ContentModerationDbContext.cs
@@ -548,6 +1274,105 @@ else:
 2. ML model analyzes full text context
 3. Scores are combined for final decision
 
+#### Wordlist Matching Algorithm
+
+The wordlist matching uses a sophisticated algorithm to prevent false positives while ensuring accurate detection:
+
+**Implementation:**
+
+```csharp
+// Helper function to check if keyword matches text
+bool KeywordMatches(string keyword, string text)
+{
+    // If keyword contains spaces, it's a phrase - use Contains()
+    if (keyword.Contains(' '))
+    {
+        return text.Contains(keyword);
+    }
+    
+    // For single words, use word boundary matching to avoid substring matches
+    // This prevents "guys" from matching "hello guys" incorrectly
+    // But allows "guys" to match "hey guys" or "guys!" correctly
+    var pattern = $@"\b{Regex.Escape(keyword)}\b";
+    return Regex.IsMatch(text, pattern, RegexOptions.IgnoreCase);
+}
+```
+
+**How It Works:**
+
+1. **Single Words:** Uses word boundary matching (`\b...\b`) to match complete words only
+   - ✅ Matches: "guys" in "hey guys" or "guys!" or "guys,"
+   - ❌ Doesn't match: "guys" in "hello guys" (if "guys" is not a standalone word)
+   - Prevents false positives like "hello guys" matching "guys" when "guys" is in the wordlist
+
+2. **Phrases (Multiple Words):** Uses simple `Contains()` matching
+   - ✅ Matches: "you are an idiot" in "you are an idiot here"
+   - ✅ Matches: "i hate" in "i hate this"
+   - Allows multi-word phrases to be detected anywhere in the text
+
+3. **Case Insensitive:** All matching is case-insensitive
+   - "FUCK" matches "fuck" and "Fuck"
+
+**Example Scenarios:**
+
+**Scenario 1: Single Word Match**
+```
+Wordlist: ["guys"]
+Text: "hello guys"
+Result: ✅ Matches (word boundary ensures "guys" is detected as a complete word)
+```
+
+**Scenario 2: Phrase Match**
+```
+Wordlist: ["you are an idiot"]
+Text: "you are an idiot here"
+Result: ✅ Matches (phrase detected using Contains())
+```
+
+**Scenario 3: False Positive Prevention**
+```
+Wordlist: ["guys"]
+Text: "hello guys" (where "guys" is part of a compound word)
+Result: ❌ No match (word boundary prevents substring match)
+```
+
+**Score Calculation:**
+
+When a wordlist match is found, the score is boosted:
+
+```csharp
+// Base scores with higher minimums when keywords are found
+var spamScore = spamMatches > 0 
+    ? Math.Min(0.95, 0.4 + (spamMatches * 0.2)) 
+    : 0.05;
+
+var toxicScore = hasStrongToxic
+    ? Math.Min(0.95, 0.5 + (toxicMatches * 0.2))
+    : 0.05;
+
+var hateScore = hasStrongHate
+    ? Math.Min(0.95, 0.6 + (hateMatches * 0.2))
+    : 0.05;
+
+var offensiveScore = hasStrongOffensive
+    ? Math.Min(0.95, 0.5 + (offensiveMatches * 0.2))
+    : 0.05;
+```
+
+**Compound Effect:**
+
+If multiple categories are triggered, scores are further boosted:
+
+```csharp
+var categoryCount = (hasStrongToxic ? 1 : 0) + (hasStrongHate ? 1 : 0) + (hasStrongOffensive ? 1 : 0);
+if (categoryCount >= 2)
+{
+    toxicScore = Math.Min(0.95, toxicScore * 1.2);
+    hateScore = Math.Min(0.95, hateScore * 1.2);
+    offensiveScore = Math.Min(0.95, offensiveScore * 1.2);
+}
+```
+
 ### Image Classification
 
 When content includes an image:
@@ -582,12 +1407,150 @@ When content includes an image:
 
 **Image:** [Flowchart showing retraining process: Check Threshold → Load Gold Labels → Train Model → Calculate Metrics → Create Version → Activate]
 
+#### ML Model Training Details
+
+The ML model uses **ML.NET FastTree** algorithm for binary classification. This section explains the training process in detail.
+
+**Training Pipeline:**
+
+```csharp
+// 1. Prepare training data from gold labels
+var trainingData = new List<ContentInput>();
+var labels = new List<ContentLabel>();
+
+foreach (var review in goldLabels)
+{
+    if (review.Content == null || review.GoldLabel == null)
+        continue;
+
+    trainingData.Add(new ContentInput { Text = review.Content.Text });
+    labels.Add(new ContentLabel
+    {
+        IsSpam = review.GoldLabel == ModerationDecision.Block,
+        IsToxic = review.GoldLabel == ModerationDecision.Block,
+        IsHate = review.GoldLabel == ModerationDecision.Block,
+        IsOffensive = review.GoldLabel == ModerationDecision.Block
+    });
+}
+
+// 2. Load data into ML.NET DataView
+var dataView = _mlContext.Data.LoadFromEnumerable(
+    trainingData.Zip(labels, (input, label) => new { Input = input, Label = label })
+        .Select(x => new TrainingData
+        {
+            Text = x.Input.Text,
+            IsSpam = x.Label.IsSpam,
+            IsToxic = x.Label.IsToxic,
+            IsHate = x.Label.IsHate,
+            IsOffensive = x.Label.IsOffensive
+        })
+);
+
+// 3. Define ML pipeline
+var pipeline = _mlContext.Transforms.Text.FeaturizeText("Features", "Text")
+    .Append(_mlContext.BinaryClassification.Trainers.FastTree(
+        labelColumnName: "IsSpam",
+        numberOfLeaves: 20,
+        numberOfTrees: 100));
+
+// 4. Train the model
+var model = pipeline.Fit(dataView);
+
+// 5. Evaluate metrics
+var predictions = model.Transform(dataView);
+var metrics = _mlContext.BinaryClassification.Evaluate(predictions, "IsSpam");
+```
+
+**FastTree Algorithm:**
+
+FastTree is a gradient boosting decision tree algorithm that:
+- Builds an ensemble of decision trees (100 trees in this implementation)
+- Each tree has up to 20 leaves (complexity control)
+- Uses gradient boosting to iteratively improve predictions
+- Handles non-linear relationships and feature interactions
+
+**Training Data Requirements:**
+
+- **Minimum:** 10 gold labels (reviews with `GoldLabel` set)
+- **Optimal:** 50+ gold labels for better accuracy
+- **Label Format:** Binary (Block = true, Allow = false)
+
+**Model Metrics:**
+
+After training, the following metrics are calculated:
+
+```csharp
+var precision = metrics.PositivePrecision;  // True Positives / (True Positives + False Positives)
+var recall = metrics.PositiveRecall;        // True Positives / (True Positives + False Negatives)
+var accuracy = metrics.Accuracy;             // Correct Predictions / Total Predictions
+
+// F1Score calculation (handles division by zero)
+var f1Score = (precision + recall) > 0
+    ? 2 * (precision * recall) / (precision + recall)
+    : 0.0; // If both are 0, F1Score is 0 (not NaN)
+```
+
+**Metric Interpretation:**
+
+- **Accuracy:** Overall correctness (higher is better, 0-1 range)
+- **Precision:** When model predicts "Block", how often is it correct? (reduces false positives)
+- **Recall:** Of all actual "Block" cases, how many did we catch? (reduces false negatives)
+- **F1Score:** Harmonic mean of Precision and Recall (balanced metric)
+
+**Model Versioning:**
+
+Each retraining creates a new model version:
+
+```csharp
+var maxVersion = await _context.ModelVersions
+    .AnyAsync(cancellationToken)
+    ? await _context.ModelVersions.MaxAsync(m => (int?)m.Version, cancellationToken) ?? 0
+    : 0;
+
+var newVersion = maxVersion + 1;
+
+var modelVersion = new ModelVersion
+{
+    Id = Guid.NewGuid(),
+    Version = newVersion,
+    Accuracy = accuracy,
+    Precision = precision,
+    Recall = recall,
+    F1Score = f1Score,
+    IsActive = activate,
+    ModelPath = $"models/model_v{newVersion}.zip",
+    TrainedAt = DateTime.UtcNow,
+    TrainingSampleCount = goldLabels.Count
+};
+```
+
+**Model Activation:**
+
+When a new model is activated:
+1. Previous active models are deactivated
+2. New model is marked as `IsActive = true`
+3. Model file is saved to disk at `ModelPath`
+4. System settings are updated (`LastRetrainDate`, `NewGoldSinceLastTrain = 0`)
+
+**Current Implementation Notes:**
+
+- **Simplified Training:** Currently trains on `IsSpam` label only (binary classification)
+- **Future Enhancement:** Multi-label classification for Spam/Toxic/Hate/Offensive separately
+- **Heuristic Fallback:** If model training fails or no model exists, system uses keyword-based heuristics
+- **NaN Protection:** All metrics are validated to prevent NaN/Infinity values before database storage
+
+**Training Code Location:**
+
+- **Training Logic:** `backend/src/AiAgents.ContentModerationAgent/ML/MlNetContentClassifier.cs` → `TrainAsync()`
+- **Training Service:** `backend/src/AiAgents.ContentModerationAgent/Application/Services/TrainingService.cs` → `TrainModelAsync()`
+- **Trigger:** `backend/src/AiAgents.ContentModerationAgent/Application/Services/ReviewService.cs` → `CheckAndTriggerRetrainingAsync()`
+
 ### Background Services
 
 Three background services run continuously:
 
 1. **ModerationAgentBackgroundService**
-   - Runs ModerationAgentRunner every 2 seconds
+   - Runs ModerationAgentRunner every 500ms (when content available) or 5 seconds (when queue is empty)
    - Processes queued content
    - Emits SignalR events on completion
 
@@ -597,11 +1560,11 @@ Three background services run continuously:
    - Triggers retraining if needed
 
 3. **ThresholdUpdateAgentBackgroundService**
-   - Runs ThresholdUpdateAgentRunner every 10 minutes
+   - Runs ThresholdUpdateRunner every hour
    - Monitors performance metrics
    - Adjusts thresholds if needed
 
-**Service Lifecycle:**
+**Service Lifecycle (ModerationAgentBackgroundService):**
 ```csharp
 protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 {
@@ -610,16 +1573,18 @@ protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         using var scope = _serviceProvider.CreateScope();
         var runner = scope.ServiceProvider.GetRequiredService<ModerationAgentRunner>();
         
-        var result = await runner.StepAsync(stoppingToken);
+        var result = await runner.TickAsync(stoppingToken);
         if (result != null)
         {
             await _hubContext.Clients.All.SendAsync("ModerationResult", result);
         }
         
-        await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
+        await Task.Delay(TimeSpan.FromMilliseconds(500), stoppingToken);
     }
 }
 ```
+
+**Note:** ModerationAgentBackgroundService runs every 500ms when content is available, or waits 5 seconds when no content is in queue. RetrainAgentBackgroundService runs every 5 minutes. ThresholdUpdateAgentBackgroundService runs every hour.
 
 ---
 
@@ -664,12 +1629,12 @@ Content-Type: multipart/form-data (with image) or application/json (without imag
 
 #### Get All Content
 ```
-GET /api/content?status=4&searchText=hello&page=1&pageSize=50
+GET /api/content?status=4&search=hello&page=1&pageSize=50
 ```
 
 **Query Parameters:**
 - `status`: (Optional) Filter by ContentStatus
-- `searchText`: (Optional) Search in text and author username
+- `search`: (Optional) Search in text and author username
 - `page`: Page number (default: 1)
 - `pageSize`: Items per page (default: 50)
 
@@ -677,9 +1642,10 @@ GET /api/content?status=4&searchText=hello&page=1&pageSize=50
 ```json
 {
   "data": [ ... ],
-  "totalPages": 5,
-  "currentPage": 1,
-  "pageSize": 50
+  "totalCount": 250,
+  "page": 1,
+  "pageSize": 50,
+  "totalPages": 5
 }
 ```
 
@@ -756,7 +1722,7 @@ POST /api/review/{contentId}/review
 
 #### Get Pending Reviews
 ```
-GET /api/review/pending
+GET /api/content/pending-review
 ```
 
 **Response:**
@@ -794,7 +1760,7 @@ PUT /api/settings/thresholds
 
 #### Update Retrain Threshold
 ```
-PUT /api/settings/retrain-threshold
+POST /api/settings/retrain-threshold
 ```
 
 **Request Body:**

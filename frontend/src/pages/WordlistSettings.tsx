@@ -17,6 +17,10 @@ const WordlistSettings = () => {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editWord, setEditWord] = useState('')
   const [editCategory, setEditCategory] = useState('')
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; wordId: string | null }>({
+    isOpen: false,
+    wordId: null
+  })
 
   const categories = ['toxic', 'hate', 'spam', 'offensive', 'slur']
 
