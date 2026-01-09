@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.ML;
 using Microsoft.ML.Data;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace AiAgents.ContentModerationAgent.ML;
 
@@ -74,11 +75,29 @@ public class MlNetContentClassifier : IContentClassifier
             }
         }
 
+        // Helper function to check if keyword matches text
+        // For single words, use word boundary matching to avoid false positives
+        // For phrases (multiple words), use Contains() as before
+        bool KeywordMatches(string keyword, string text)
+        {
+            // If keyword contains spaces, it's a phrase - use Contains()
+            if (keyword.Contains(' '))
+            {
+                return text.Contains(keyword);
+            }
+            
+            // For single words, use word boundary matching to avoid substring matches
+            // This prevents "guys" from matching "hello guys" incorrectly
+            // But allows "guys" to match "hey guys" or "guys!" correctly
+            var pattern = $@"\b{Regex.Escape(keyword)}\b";
+            return Regex.IsMatch(text, pattern, RegexOptions.IgnoreCase);
+        }
+
         // Calculate scores based on keyword matches
-        var spamMatches = spamKeywords.Count(k => lowerText.Contains(k));
-        var toxicMatches = toxicKeywords.Count(k => lowerText.Contains(k));
-        var hateMatches = hateKeywords.Count(k => lowerText.Contains(k));
-        var offensiveMatches = offensiveKeywords.Count(k => lowerText.Contains(k));
+        var spamMatches = spamKeywords.Count(k => KeywordMatches(k, lowerText));
+        var toxicMatches = toxicKeywords.Count(k => KeywordMatches(k, lowerText));
+        var hateMatches = hateKeywords.Count(k => KeywordMatches(k, lowerText));
+        var offensiveMatches = offensiveKeywords.Count(k => KeywordMatches(k, lowerText));
 
         // Additional spam detection patterns
         // 1. Repeated words (e.g., "CLICK CLICK CLICK")
