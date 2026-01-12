@@ -16,6 +16,11 @@ public class MlNetContentClassifier : IContentClassifier
     private readonly string _modelsDirectory;
     private readonly IServiceProvider? _serviceProvider;
 
+    /// <summary>
+    /// Returns true if ML model is loaded in memory
+    /// </summary>
+    public bool IsModelLoaded => _model != null;
+
     public MlNetContentClassifier(string modelsDirectory = "models", IServiceProvider? serviceProvider = null)
     {
         _mlContext = new MLContext(seed: 0);
@@ -26,8 +31,39 @@ public class MlNetContentClassifier : IContentClassifier
 
     public async Task<ContentScores> PredictAsync(string text, CancellationToken cancellationToken = default)
     {
-        // Use keyword-based heuristics (no ML model needed for now)
-        // This ensures the agent works reliably without training data
+        // 1. Calculate wordlist scores (rule-based, instant blocking)
+        var wordlistScores = await CalculateWordlistScoresAsync(text, cancellationToken);
+        
+        // 2. Try to use ML model if available (contextual understanding)
+        ContentScores? mlScores = null;
+        if (_model != null)
+        {
+            try
+            {
+                mlScores = await PredictWithMLModelAsync(text, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                // If ML model fails, fallback to wordlist only
+                // Log error if needed: System.Diagnostics.Debug.WriteLine($"ML model prediction failed: {ex.Message}");
+            }
+        }
+        
+        // 3. Combine wordlist and ML model scores
+        if (mlScores != null)
+        {
+            // Use combination strategy: wordlist boost + ML model
+            return CombineScores(wordlistScores, mlScores);
+        }
+        else
+        {
+            // No ML model available → use wordlist only
+            return wordlistScores;
+        }
+    }
+
+    private async Task<ContentScores> CalculateWordlistScoresAsync(string text, CancellationToken cancellationToken)
+    {
         var lowerText = text.ToLowerInvariant();
         var originalText = text;
         
@@ -76,8 +112,6 @@ public class MlNetContentClassifier : IContentClassifier
         }
 
         // Helper function to check if keyword matches text
-        // For single words, use word boundary matching to avoid false positives
-        // For phrases (multiple words), use Contains() as before
         bool KeywordMatches(string keyword, string text)
         {
             // If keyword contains spaces, it's a phrase - use Contains()
@@ -87,8 +121,6 @@ public class MlNetContentClassifier : IContentClassifier
             }
             
             // For single words, use word boundary matching to avoid substring matches
-            // This prevents "guys" from matching "hello guys" incorrectly
-            // But allows "guys" to match "hey guys" or "guys!" correctly
             var pattern = $@"\b{Regex.Escape(keyword)}\b";
             return Regex.IsMatch(text, pattern, RegexOptions.IgnoreCase);
         }
@@ -133,7 +165,6 @@ public class MlNetContentClassifier : IContentClassifier
         }
 
         // Enhanced score calculation: higher base scores and better multipliers
-        // If any strong indicator is found, give it a significant boost
         var hasStrongToxic = toxicMatches > 0;
         var hasStrongHate = hateMatches > 0;
         var hasStrongOffensive = offensiveMatches > 0;
@@ -144,11 +175,11 @@ public class MlNetContentClassifier : IContentClassifier
             : 0.05;
         
         var toxicScore = hasStrongToxic
-            ? Math.Min(0.95, 0.5 + (toxicMatches * 0.2)) // Higher base when toxic words found
+            ? Math.Min(0.95, 0.5 + (toxicMatches * 0.2))
             : 0.05;
         
         var hateScore = hasStrongHate
-            ? Math.Min(0.95, 0.6 + (hateMatches * 0.2)) // Even higher for hate speech
+            ? Math.Min(0.95, 0.6 + (hateMatches * 0.2))
             : 0.05;
         
         var offensiveScore = hasStrongOffensive
@@ -171,6 +202,89 @@ public class MlNetContentClassifier : IContentClassifier
             HateScore = hateScore,
             OffensiveScore = offensiveScore
         });
+    }
+
+    private async Task<ContentScores> PredictWithMLModelAsync(string text, CancellationToken cancellationToken)
+    {
+        if (_model == null)
+            throw new InvalidOperationException("ML model is not loaded");
+
+        // Create input data
+        var input = new ContentInput { Text = text };
+        var inputData = new[] { input };
+        var dataView = _mlContext.Data.LoadFromEnumerable(inputData);
+        
+        // Make prediction
+        var predictions = _model.Transform(dataView);
+        var prediction = _mlContext.Data.CreateEnumerable<ContentPrediction>(predictions, reuseRowObject: false)
+            .FirstOrDefault();
+        
+        if (prediction == null)
+        {
+            // Fallback to default scores if prediction fails
+            return new ContentScores
+            {
+                SpamScore = 0.05,
+                ToxicScore = 0.05,
+                HateScore = 0.05,
+                OffensiveScore = 0.05
+            };
+        }
+        
+        // Convert ML model prediction to ContentScores
+        // Note: Current model only predicts IsSpam, so we use that for SpamScore
+        // For other scores, we use the probability as a base (model would need multi-label training for full support)
+        var spamProbability = prediction.PredictedLabel ? prediction.SpamProbability : (1.0f - prediction.SpamProbability);
+        
+        // Since current model is binary (IsSpam), we use the probability for spam
+        // For other categories, we use a scaled version (model would need multi-label training for accurate scores)
+        return await Task.FromResult(new ContentScores
+        {
+            SpamScore = Math.Max(0.05, Math.Min(0.95, spamProbability)),
+            // For now, use scaled spam probability for other categories
+            // In production, train separate models or use multi-label classification
+            ToxicScore = Math.Max(0.05, Math.Min(0.95, spamProbability * 0.7)),
+            HateScore = Math.Max(0.05, Math.Min(0.95, spamProbability * 0.6)),
+            OffensiveScore = Math.Max(0.05, Math.Min(0.95, spamProbability * 0.8))
+        });
+    }
+
+    private ContentScores CombineScores(ContentScores wordlistScores, ContentScores mlScores)
+    {
+        // Combination strategy: Wordlist boost + ML model contextual understanding
+        // If wordlist has strong match → prioritize wordlist, otherwise use ML model with wordlist boost
+        
+        return new ContentScores
+        {
+            // Spam: If wordlist match → boost, otherwise use ML model
+            SpamScore = CombineSingleScore(wordlistScores.SpamScore, mlScores.SpamScore, threshold: 0.4),
+            
+            // Toxic: If wordlist match → boost, otherwise use ML model
+            ToxicScore = CombineSingleScore(wordlistScores.ToxicScore, mlScores.ToxicScore, threshold: 0.5),
+            
+            // Hate: If wordlist match → boost, otherwise use ML model
+            HateScore = CombineSingleScore(wordlistScores.HateScore, mlScores.HateScore, threshold: 0.6),
+            
+            // Offensive: If wordlist match → boost, otherwise use ML model
+            OffensiveScore = CombineSingleScore(wordlistScores.OffensiveScore, mlScores.OffensiveScore, threshold: 0.5)
+        };
+    }
+
+    private double CombineSingleScore(double wordlistScore, double mlScore, double threshold)
+    {
+        // If wordlist has strong match → prioritize wordlist with ML boost
+        if (wordlistScore > threshold)
+        {
+            // Wordlist match → boost with ML model contribution
+            // Take maximum of wordlist and ML, with slight boost from ML
+            return Math.Min(0.95, Math.Max(wordlistScore, mlScore) + (mlScore * 0.1));
+        }
+        else
+        {
+            // No strong wordlist match → use ML model with wordlist as context
+            // Weighted average: 70% ML model, 30% wordlist
+            return Math.Min(0.95, (mlScore * 0.7) + (wordlistScore * 0.3));
+        }
     }
 
     public async Task<ModelMetrics> TrainAsync(List<Review> goldLabels, CancellationToken cancellationToken = default)
@@ -240,11 +354,33 @@ public class MlNetContentClassifier : IContentClassifier
 
     public async Task LoadModelAsync(string modelPath, CancellationToken cancellationToken = default)
     {
-        if (File.Exists(modelPath))
+        var fullPath = Path.GetFullPath(modelPath);
+        if (File.Exists(fullPath))
+        {
+            _model = _mlContext.Model.Load(fullPath, out _);
+        }
+        else if (File.Exists(modelPath))
         {
             _model = _mlContext.Model.Load(modelPath, out _);
         }
-        // Don't create default model - use heuristics instead
+        await Task.CompletedTask;
+    }
+
+    public async Task SaveModelAsync(string modelPath, CancellationToken cancellationToken = default)
+    {
+        if (_model == null)
+            throw new InvalidOperationException("No model to save. Train model first.");
+        
+        // Create directory if it doesn't exist
+        var directory = Path.GetDirectoryName(modelPath);
+        if (!string.IsNullOrEmpty(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+        
+        // Save model
+        var fullPath = Path.GetFullPath(modelPath);
+        _mlContext.Model.Save(_model, null, fullPath);
         await Task.CompletedTask;
     }
 

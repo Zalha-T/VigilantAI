@@ -68,6 +68,37 @@ public class TrainingService : ITrainingService
         var newVersion = maxVersion + 1;
         _logger?.LogInformation("Creating new model version: v{Version}", newVersion);
 
+        // Determine model path (use absolute path for saving)
+        // In ASP.NET Core, Directory.GetCurrentDirectory() might not be reliable
+        // Use AppContext.BaseDirectory or ContentRootPath instead
+        var baseDirectory = AppContext.BaseDirectory;
+        var modelsDirectory = Path.Combine(baseDirectory, "models");
+        
+        // If running from bin/Debug/net8.0/, go up to project root
+        if (baseDirectory.Contains("bin"))
+        {
+            var binIndex = baseDirectory.IndexOf("bin", StringComparison.OrdinalIgnoreCase);
+            var projectRoot = baseDirectory.Substring(0, binIndex).TrimEnd('\\', '/');
+            modelsDirectory = Path.Combine(projectRoot, "models");
+        }
+        
+        Directory.CreateDirectory(modelsDirectory);
+        var modelPath = Path.GetFullPath(Path.Combine(modelsDirectory, $"model_v{newVersion}.zip"));
+        
+        _logger?.LogInformation("Saving model to: {ModelPath}", modelPath);
+        
+        // Save model to disk
+        try
+        {
+            await _classifier.SaveModelAsync(modelPath, cancellationToken);
+            _logger?.LogInformation("Model saved to: {ModelPath}", modelPath);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Failed to save model to disk: {ModelPath}", modelPath);
+            // Continue anyway - model is in memory
+        }
+
         // Create new model version
         // Ensure no NaN or Infinity values (SQL Server doesn't support them)
         var accuracy = double.IsNaN(modelMetrics.Accuracy) || double.IsInfinity(modelMetrics.Accuracy) ? 0.0 : modelMetrics.Accuracy;
@@ -84,7 +115,7 @@ public class TrainingService : ITrainingService
             Recall = recall,
             F1Score = f1Score,
             IsActive = activate,
-            ModelPath = $"models/model_v{newVersion}.zip",
+            ModelPath = $"models/model_v{newVersion}.zip", // Relative path for database
             TrainedAt = DateTime.UtcNow,
             TrainingSampleCount = goldLabels.Count
         };
@@ -103,6 +134,20 @@ public class TrainingService : ITrainingService
             }
             
             _logger?.LogInformation("Activating new model version: v{Version}", newVersion);
+            
+            // Load the new model into classifier if it's MlNetContentClassifier
+            if (_classifier is MlNetContentClassifier mlClassifier)
+            {
+                try
+                {
+                    await mlClassifier.LoadModelAsync(modelPath, cancellationToken);
+                    _logger?.LogInformation("New model v{Version} loaded into classifier", newVersion);
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError(ex, "Failed to load new model into classifier");
+                }
+            }
         }
 
         _context.ModelVersions.Add(modelVersion);

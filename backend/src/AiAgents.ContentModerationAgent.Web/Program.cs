@@ -186,6 +186,56 @@ using (var scope = app.Services.CreateScope())
             logger.LogInformation("Database already exists");
         }
         
+        // Load active ML model if available
+        var classifier = scope.ServiceProvider.GetRequiredService<IContentClassifier>();
+        if (classifier is MlNetContentClassifier mlClassifier)
+        {
+            try
+            {
+                var activeModel = await db.ModelVersions
+                    .Where(m => m.IsActive)
+                    .OrderByDescending(m => m.Version)
+                    .FirstOrDefaultAsync();
+                
+                if (activeModel != null && !string.IsNullOrEmpty(activeModel.ModelPath))
+                {
+                    // Use same path logic as TrainingService
+                    var baseDirectory = AppContext.BaseDirectory;
+                    var modelsDirectory = Path.Combine(baseDirectory, "models");
+                    
+                    if (baseDirectory.Contains("bin"))
+                    {
+                        var binIndex = baseDirectory.IndexOf("bin", StringComparison.OrdinalIgnoreCase);
+                        var projectRoot = baseDirectory.Substring(0, binIndex).TrimEnd('\\', '/');
+                        modelsDirectory = Path.Combine(projectRoot, "models");
+                    }
+                    
+                    var modelPath = Path.GetFullPath(Path.Combine(modelsDirectory, $"model_v{activeModel.Version}.zip"));
+                    
+                    if (File.Exists(modelPath))
+                    {
+                        await mlClassifier.LoadModelAsync(modelPath);
+                        logger.LogInformation("✓ Active ML model v{Version} loaded from: {ModelPath}", 
+                            activeModel.Version, modelPath);
+                    }
+                    else
+                    {
+                        logger.LogWarning("Active model v{Version} not found at: {ModelPath}. Model is in database but file is missing.", 
+                            activeModel.Version, modelPath);
+                        logger.LogInformation("💡 Tip: Use POST /api/model/save-active-model to save the model if it's loaded in memory.");
+                    }
+                }
+                else
+                {
+                    logger.LogInformation("No active ML model found. Using wordlist-based heuristics only.");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to load active ML model. Using wordlist-based heuristics only.");
+            }
+        }
+        
         // Seed initial data
         var seeder = new DatabaseSeeder(db);
         await seeder.SeedAsync();
